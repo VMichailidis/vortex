@@ -553,6 +553,10 @@ Word Emulator::get_csr(uint32_t addr, uint32_t wid, uint32_t tid) {
         CSR_READ_64(VX_CSR_MPM_LMEM_BANK_ST, lmem_perf.bank_stalls);
         }
       } break;
+      case VX_DCR_MPM_CLASS_3: {
+          CSR_READ_64(VX_CSR_MPM_SCALAR_CANDIDATES, core_perf.scalar_candidates);
+          CSR_READ_64(VX_CSR_MPM_ISSUED_INSTR, core_perf.issued_instr);
+        } break;
       default:
         std::cerr << "Error: invalid MPM CLASS: value=" << perf_class << std::endl;
         std::abort();

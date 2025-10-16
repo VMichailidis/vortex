@@ -57,6 +57,8 @@ public:
     uint64_t scrb_sfu;
     uint64_t scrb_csrs;
     uint64_t scrb_wctl;
+    uint64_t scalar_candidates;
+    uint64_t issued_instr;
   #ifdef EXT_V_ENABLE
     uint64_t vinstrs;
     uint64_t scrb_vpu;
@@ -84,6 +86,8 @@ public:
       , scrb_sfu(0)
       , scrb_csrs(0)
       , scrb_wctl(0)
+      , scalar_candidates(0)
+      , issued_instr(0)
     #ifdef EXT_V_ENABLE
       , vinstrs(0)
       , scrb_vpu(0)
