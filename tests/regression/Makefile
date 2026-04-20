@@ -14,6 +14,7 @@ all:
 	$(MAKE) -C sort
 	$(MAKE) -C fence
 	$(MAKE) -C vecadd
+	$(MAKE) -C bit_reverse_shuffle
 	$(MAKE) -C sgemm
 	$(MAKE) -C conv3
 	$(MAKE) -C relu
@@ -35,6 +36,7 @@ run-simx:
 	$(MAKE) -C sort run-simx
 	$(MAKE) -C fence run-simx
 	$(MAKE) -C vecadd run-simx
+	$(MAKE) -C bit_reverse_shuffle run-simx
 	$(MAKE) -C sgemm run-simx
 	$(MAKE) -C conv3 run-simx
 	$(MAKE) -C relu run-simx
@@ -56,6 +58,7 @@ run-rtlsim:
 	$(MAKE) -C sort run-rtlsim
 	$(MAKE) -C fence run-rtlsim
 	$(MAKE) -C vecadd run-rtlsim
+	$(MAKE) -C bit_reverse_shuffle run-rtlsim
 	$(MAKE) -C sgemm run-rtlsim
 	$(MAKE) -C conv3 run-rtlsim
 	$(MAKE) -C relu run-rtlsim
@@ -77,6 +80,7 @@ clean:
 	$(MAKE) -C sort clean
 	$(MAKE) -C fence clean
 	$(MAKE) -C vecadd clean
+	$(MAKE) -C bit_reverse_shuffle clean
 	$(MAKE) -C sgemm clean
 	$(MAKE) -C conv3 clean
 	$(MAKE) -C relu clean
