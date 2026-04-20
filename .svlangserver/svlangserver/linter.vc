@@ -1,0 +1,60 @@
+-v /home/basil/scratchpad/vortex-container/container/vortex/hw/rtl/VX_gpu_pkg.sv
+-v /home/basil/scratchpad/vortex-container/container/vortex/third_party/ramulator/verilog_verification/sources/arch_package.sv
+-v /home/basil/scratchpad/vortex-container/container/vortex/hw/rtl/afu/opae/ccip/ccip_if_pkg.sv
+-v /home/basil/scratchpad/vortex-container/container/vortex/hw/rtl/afu/opae/local_mem_cfg_pkg.sv
+-v /home/basil/scratchpad/vortex-container/container/vortex/hw/rtl/fpu/VX_fpu_pkg.sv
+-v /home/basil/scratchpad/vortex-container/container/vortex/hw/rtl/tcu/VX_tcu_pkg.sv
+-v /home/basil/scratchpad/vortex-container/container/vortex/hw/rtl/VX_trace_pkg.sv
+-v /home/basil/scratchpad/vortex-container/container/vortex/third_party/cvfpu/src/common_cells/src/cb_filter_pkg.sv
+-v /home/basil/scratchpad/vortex-container/container/vortex/third_party/cvfpu/src/common_cells/src/cf_math_pkg.sv
+-v /home/basil/scratchpad/vortex-container/container/vortex/third_party/cvfpu/src/common_cells/src/ecc_pkg.sv
+-v /home/basil/scratchpad/vortex-container/container/vortex/third_party/cvfpu/src/fpnew_pkg.sv
+-v /home/basil/scratchpad/vortex-container/container/vortex/third_party/cvfpu/src/fpu_div_sqrt_mvp/hdl/defs_div_sqrt_mvp.sv
+-v /home/basil/scratchpad/vortex-container/container/vortex/third_party/hardfloat/source/bsg_hardfloat_pkg.sv
+-v /home/basil/scratchpad/vortex-container/container/vortex/third_party/ramulator/verilog_verification/sources/proj_package.sv
++incdir+/home/basil/scratchpad/vortex-container/container/vortex/hw/rtl/afu/opae
++incdir+/home/basil/scratchpad/vortex-container/container/vortex/hw/rtl/afu/opae/ccip
++incdir+/home/basil/scratchpad/vortex-container/container/vortex/hw/rtl/afu/xrt
++incdir+/home/basil/scratchpad/vortex-container/container/vortex/hw/rtl/cache
++incdir+/home/basil/scratchpad/vortex-container/container/vortex/hw/rtl/core
++incdir+/home/basil/scratchpad/vortex-container/container/vortex/hw/rtl/fpu
++incdir+/home/basil/scratchpad/vortex-container/container/vortex/hw/rtl/interfaces
++incdir+/home/basil/scratchpad/vortex-container/container/vortex/hw/rtl/libs
++incdir+/home/basil/scratchpad/vortex-container/container/vortex/hw/rtl/mem
++incdir+/home/basil/scratchpad/vortex-container/container/vortex/hw/rtl/tcu/bhf
++incdir+/home/basil/scratchpad/vortex-container/container/vortex/hw/rtl/tcu
++incdir+/home/basil/scratchpad/vortex-container/container/vortex/hw/rtl
++incdir+/home/basil/scratchpad/vortex-container/container/vortex/hw/syn/xilinx/sandbox
++incdir+/home/basil/scratchpad/vortex-container/container/vortex/sim/opaesim
++incdir+/home/basil/scratchpad/vortex-container/container/vortex/sim/rtlsim
++incdir+/home/basil/scratchpad/vortex-container/container/vortex/sim/xrtsim
++incdir+/home/basil/scratchpad/vortex-container/container/vortex/third_party/cvfpu/src/common_cells/formal
++incdir+/home/basil/scratchpad/vortex-container/container/vortex/third_party/cvfpu/src/common_cells/src
++incdir+/home/basil/scratchpad/vortex-container/container/vortex/third_party/cvfpu/src/common_cells/src/deprecated
++incdir+/home/basil/scratchpad/vortex-container/container/vortex/third_party/cvfpu/src
++incdir+/home/basil/scratchpad/vortex-container/container/vortex/third_party/cvfpu/src/fpu_div_sqrt_mvp/hdl
++incdir+/home/basil/scratchpad/vortex-container/container/vortex/third_party/hardfloat/source
++incdir+/home/basil/scratchpad/vortex-container/container/vortex/third_party/ramulator/verilog_verification/sources
++incdir+/home/basil/scratchpad/vortex-container/container/vortex/hw/rtl/afu/opae
++incdir+/home/basil/scratchpad/vortex-container/container/vortex/hw/rtl/afu/opae/ccip
++incdir+/home/basil/scratchpad/vortex-container/container/vortex/hw/rtl/afu/xrt
++incdir+/home/basil/scratchpad/vortex-container/container/vortex/hw/rtl/cache
++incdir+/home/basil/scratchpad/vortex-container/container/vortex/hw/rtl/core
++incdir+/home/basil/scratchpad/vortex-container/container/vortex/hw/rtl/fpu
++incdir+/home/basil/scratchpad/vortex-container/container/vortex/hw/rtl/interfaces
++incdir+/home/basil/scratchpad/vortex-container/container/vortex/hw/rtl/libs
++incdir+/home/basil/scratchpad/vortex-container/container/vortex/hw/rtl/mem
++incdir+/home/basil/scratchpad/vortex-container/container/vortex/hw/rtl/tcu/bhf
++incdir+/home/basil/scratchpad/vortex-container/container/vortex/hw/rtl/tcu
++incdir+/home/basil/scratchpad/vortex-container/container/vortex/hw/rtl
++incdir+/home/basil/scratchpad/vortex-container/container/vortex/hw/syn/xilinx/sandbox
++incdir+/home/basil/scratchpad/vortex-container/container/vortex/sim/opaesim
++incdir+/home/basil/scratchpad/vortex-container/container/vortex/sim/rtlsim
++incdir+/home/basil/scratchpad/vortex-container/container/vortex/sim/xrtsim
++incdir+/home/basil/scratchpad/vortex-container/container/vortex/third_party/cvfpu/src/common_cells/formal
++incdir+/home/basil/scratchpad/vortex-container/container/vortex/third_party/cvfpu/src/common_cells/src
++incdir+/home/basil/scratchpad/vortex-container/container/vortex/third_party/cvfpu/src/common_cells/src/deprecated
++incdir+/home/basil/scratchpad/vortex-container/container/vortex/third_party/cvfpu/src
++incdir+/home/basil/scratchpad/vortex-container/container/vortex/third_party/cvfpu/src/fpu_div_sqrt_mvp/hdl
++incdir+/home/basil/scratchpad/vortex-container/container/vortex/third_party/hardfloat/source
++incdir+/home/basil/scratchpad/vortex-container/container/vortex/third_party/ramulator/verilog_verification/sources
