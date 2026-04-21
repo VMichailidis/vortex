@@ -40,4 +40,10 @@ template <const char W> int reverse(int x) {
         reversed = (reversed << 1) | (x >> j & 1);
     return reversed;
 }
+int reverse(int w, int x) {
+    int reversed = 0;
+    for (int j = 0; j < w; j++) // log2(N) = 3 bits needed to represent indices
+        reversed = (reversed << 1) | (x >> j & 1);
+    return reversed;
+}
 #endif

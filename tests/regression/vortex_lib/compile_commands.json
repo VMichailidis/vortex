@@ -15,35 +15,12 @@
       "-O2",
       "-DNDEBUG",
       "-o",
-      "bit_reverse_shuffle",
-      "/vortex/tests/regression/bit_reverse_shuffle/main.cpp"
+      "vortex_lib",
+      "/vortex/tests/regression/vortex_lib/main.cpp"
     ],
-    "directory": "/vortex/build/tests/regression/bit_reverse_shuffle",
-    "file": "/vortex/tests/regression/bit_reverse_shuffle/main.cpp",
-    "output": "/vortex/build/tests/regression/bit_reverse_shuffle/bit_reverse_shuffle"
-  },
-  {
-    "arguments": [
-      "/usr/bin/g++",
-      "-c",
-      "-std=c++17",
-      "-Wall",
-      "-Wextra",
-      "-pedantic",
-      "-Wfatal-errors",
-      "-I/vortex/runtime/include",
-      "-I/vortex/build/hw",
-      "-I/vortex/sim/common",
-      "-I/vortex/kernel/include",
-      "-O2",
-      "-DNDEBUG",
-      "-o",
-      "bit_reverse_shuffle",
-      "/vortex/tests/regression/bit_reverse_shuffle/shuffle.hpp"
-    ],
-    "directory": "/vortex/build/tests/regression/bit_reverse_shuffle",
-    "file": "/vortex/tests/regression/bit_reverse_shuffle/shuffle.hpp",
-    "output": "/vortex/build/tests/regression/bit_reverse_shuffle/bit_reverse_shuffle"
+    "directory": "/vortex/build/tests/regression/vortex_lib",
+    "file": "/vortex/tests/regression/vortex_lib/main.cpp",
+    "output": "/vortex/build/tests/regression/vortex_lib/vortex_lib"
   },
   {
     "arguments": [
@@ -76,11 +53,11 @@
       "/root/tools/libcrt32/lib/baremetal/libclang_rt.builtins-riscv32.a",
       "-o",
       "kernel.elf",
-      "/vortex/tests/regression/bit_reverse_shuffle/kernel.cpp"
+      "/vortex/tests/regression/vortex_lib/kernel.cpp"
     ],
-    "directory": "/vortex/build/tests/regression/bit_reverse_shuffle",
-    "file": "/vortex/tests/regression/bit_reverse_shuffle/kernel.cpp",
-    "output": "/vortex/build/tests/regression/bit_reverse_shuffle/kernel.elf"
+    "directory": "/vortex/build/tests/regression/vortex_lib",
+    "file": "/vortex/tests/regression/vortex_lib/kernel.cpp",
+    "output": "/vortex/build/tests/regression/vortex_lib/kernel.elf"
   },
   {
     "arguments": [
@@ -377,10 +354,10 @@
       "-msmall-data-limit",
       "8",
       "-debugger-tuning=gdb",
-      "-fdebug-compilation-dir=/vortex/build/tests/regression/bit_reverse_shuffle",
+      "-fdebug-compilation-dir=/vortex/build/tests/regression/vortex_lib",
       "-ffunction-sections",
       "-fdata-sections",
-      "-fcoverage-compilation-dir=/vortex/build/tests/regression/bit_reverse_shuffle",
+      "-fcoverage-compilation-dir=/vortex/build/tests/regression/vortex_lib",
       "-resource-dir",
       "/root/tools/llvm-vortex/lib/clang/18",
       "-I",
@@ -428,10 +405,10 @@
       "c++",
       "-o",
       "/tmp/kernel-ca231f.o",
-      "/vortex/tests/regression/bit_reverse_shuffle/kernel.cpp"
+      "/vortex/tests/regression/vortex_lib/kernel.cpp"
     ],
-    "directory": "/vortex/build/tests/regression/bit_reverse_shuffle",
-    "file": "/vortex/tests/regression/bit_reverse_shuffle/kernel.cpp",
+    "directory": "/vortex/build/tests/regression/vortex_lib",
+    "file": "/vortex/tests/regression/vortex_lib/kernel.cpp",
     "output": "/tmp/kernel-ca231f.o"
   }
 

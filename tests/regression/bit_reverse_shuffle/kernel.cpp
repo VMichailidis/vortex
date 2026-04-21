@@ -1,6 +1,8 @@
 #include "common.h"
 #include "vx_intrinsics.h"
 #include <cstdio>
+#include <sys/_intsup.h>
+#include <vector>
 #include <vx_spawn.h>
 #define LOG_BLOCK_WIDTH_TEST 5
 
@@ -96,15 +98,73 @@ void shuffle_batch(kernel_arg_t *__UNIFORM__ arg) {
     buffer2mem<int, LOG_BLOCK_WIDTH>(dst_page, *log_n, buf, input);
 }
 
+template <typename T, unsigned char LOG_BLOCK_WIDTH>
+void shuffle_batch_diag(kernel_arg_t *__UNIFORM__ arg) {
+    constexpr unsigned BUF_ELEMS = (1 << LOG_BLOCK_WIDTH) * (1 << LOG_BLOCK_WIDTH);
+    auto input = reinterpret_cast<int *>(arg->input);
+    auto pages = reinterpret_cast<const unsigned *>(arg->pages);
+    auto scratch_pool = reinterpret_cast<int *>(arg->scratch_pool);
+    auto log_n = reinterpret_cast<unsigned int *>(arg->log_n);
+    T *buf = scratch_pool + (unsigned long)blockIdx.x * BUF_ELEMS;
+    unsigned page = pages[blockIdx.x];
+
+    mem2buffer<T, LOG_BLOCK_WIDTH>(page, *log_n, input, buf);
+    __syncthreads();
+
+    shuffle<T, 2 * LOG_BLOCK_WIDTH>(buf);
+    __syncthreads();
+    buffer2mem<T, LOG_BLOCK_WIDTH>(page, *log_n, buf, input);
+}
+
+template <unsigned LOG_BLOCK_WIDTH>
+unsigned int gen_page(unsigned log_n, unsigned int prev) {
+    constexpr unsigned char NUM_B_BITS = log_n - (2 * LOG_BLOCK_WIDTH);
+    unsigned int is_odd = NUM_B_BITS % 2;
+    unsigned int hmax = 1 << (NUM_B_BITS / 2);
+    unsigned int mid_point = is_odd ? hmax & prev : 0;
+    unsigned int lo = prev & (hmax - 1);
+    unsigned int rlo = reverse<NUM_B_BITS / 2>(lo);
+    unsigned int up = prev >> ((NUM_B_BITS / 2) + is_odd);
+    // In case we reached the last value, return 0 to signal
+    // that there's no next value
+    if (prev == (1 << NUM_B_BITS) - 1)
+        return 0;
+    // If we've reached a symetrical point, go down a row
+    if (rlo == up) {
+        return 0 | mid_point | (lo + 1);
+    } else {
+        // Otherwise, move normally
+        return ((up + 1) << ((NUM_B_BITS / 2) + is_odd)) | mid_point | lo;
+    }
+}
 int main() {
     kernel_arg_t *arg = (kernel_arg_t *)csr_read(VX_CSR_MSCRATCH);
-    // return vx_spawn_threads(1, &arg->threads, nullptr,
-    //                         (vx_kernel_func_cb)shuffle_batch<int,
-    //                         LOG_BLOCK_WIDTH_TEST>, arg);
-    auto input = reinterpret_cast<int *>(arg->input);
-    input[0] = vx_num_threads();
-    input[1] = vx_num_warps();
-    input[2] = vx_num_cores();
+    return vx_spawn_threads(1, &arg->threads, nullptr,
+                            (vx_kernel_func_cb)shuffle_batch<int, LOG_BLOCK_WIDTH_TEST>,
+                            arg);
+
+    int num_sm = vx_num_cores();
+    int max_blocks_per_sm = vx_num_threads();
+    const unsigned hw_concurrency =
+        static_cast<unsigned>(((num_sm * max_blocks_per_sm) / 2) * 2);
+    std::vector<unsigned> pages;
+    std::vector<unsigned> diag;
+    unsigned b = 0;
+    do {
+        unsigned rb = reverse(&arg->log_n - (2 * LOG_BLOCK_WIDTH_TEST), b);
+        if (b != rb) {
+            pages.push_back(b);
+            pages.push_back(rb);
+        } else {
+            diag.push_back(b);
+        }
+        b = gen_page<LOG_BLOCK_WIDTH_TEST>(&arg->log_n, b);
+    } while (b);
+
+    // auto input = reinterpret_cast<int *>(arg->input);
+    // input[0] = vx_num_threads();
+    // input[1] = vx_num_warps();
+    // input[2] = vx_num_cores();
 
     // printf("Num Threads: %d,\n Num Warps: %d,\n Num Cores: %d\n", vx_num_threads(),
     // vx_num_warps(), vx_num_cores());
