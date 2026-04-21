@@ -1,171 +1,178 @@
+/*
+ * kernel.cpp  –  Vortex GPGPU port of CULIBRAShuffle.hpp
+ *
+ * CUDA concept          →  Vortex equivalent
+ * ─────────────────────────────────────────────
+ * __global__ kernel     →  plain C++ function launched with vx_spawn_threads
+ * blockIdx.x            →  blockIdx.x   (from vx_spawn.h)
+ * threadIdx.x           →  threadIdx.x  (from vx_spawn.h)
+ * blockDim.x            →  blockDim.x   (from vx_spawn.h)
+ * __shared__ T buf[]    →  __local_mem(size)  (per-workgroup scratchpad)
+ * __syncthreads()       →  __syncthreads()    (barrier macro in vx_spawn.h)
+ * Multiple kernel args  →  packed into kernel_arg_t, passed through MSCRATCH
+ */
+
 #include "common.h"
-#include "vx_intrinsics.h"
-#include <cstdio>
-#include <sys/_intsup.h>
-#include <vector>
 #include <vx_spawn.h>
-#define LOG_BLOCK_WIDTH_TEST 5
 
-template <typename T, unsigned char LOG_BLOCK_WIDTH>
-void mem2buffer(unsigned int page, unsigned int log_n, const T *__restrict__ src,
-                T *__restrict__ dst) {
-    constexpr unsigned BLOCK_SIZE = 1u << LOG_BLOCK_WIDTH;
-    for (unsigned a = threadIdx.x; a < BLOCK_SIZE; a += blockDim.x) {
-        unsigned src_base = (a << (log_n - LOG_BLOCK_WIDTH)) | (page << LOG_BLOCK_WIDTH);
-        unsigned dst_base = a << LOG_BLOCK_WIDTH;
-        for (unsigned i = 0; i < BLOCK_SIZE; i++) {
-            dst[dst_base + i] = src[src_base + i];
-        }
-    }
-}
-template <typename T, unsigned char LOG_BLOCK_WIDTH>
-void buffer2mem(unsigned int page, unsigned int log_n, const T *__restrict__ src,
-                T *__restrict__ dst) {
-    constexpr unsigned BLOCK_SIZE = 1u << LOG_BLOCK_WIDTH;
-    for (unsigned a = threadIdx.x; a < BLOCK_SIZE; a += blockDim.x) {
-        unsigned dst_base = (a << (log_n - LOG_BLOCK_WIDTH)) | (page << LOG_BLOCK_WIDTH);
-        unsigned src_base = a << LOG_BLOCK_WIDTH;
-        for (unsigned i = 0; i < BLOCK_SIZE; i++) {
-            dst[dst_base + i] = src[src_base + i];
-        }
-    }
+/* ------------------------------------------------------------------ */
+/*  Bit-reversal helper – identical logic to the CUDA template         */
+/*  W is passed as a runtime value because Vortex kernels are plain C++*/
+/* ------------------------------------------------------------------ */
+static inline int bit_reverse(int x, int W) {
+    int reversed = 0;
+    for (int j = 0; j < W; j++)
+        reversed = (reversed << 1) | ((x >> j) & 1);
+    return reversed;
 }
 
-template <typename T, unsigned int LOG_SIZE> void shuffle(T *signal) {
-    int lim = ((1ul << LOG_SIZE) - (1ul << (LOG_SIZE / 2))) / 2;
-    for (int id = threadIdx.x; id < lim; id += blockDim.x) {
-        // calculate index within the table
+/* ------------------------------------------------------------------ */
+/*  libra – in-place bit-reversal permutation on a 2^LOG_SIZE buffer   */
+/*  Operates on the per-block scratch tile; threads cooperate.         */
+/*  Direct port of the CUDA __device__ template libra<T, LOG_SIZE>.   */
+/* ------------------------------------------------------------------ */
+static void libra_local(TYPE *signal, int LOG_SIZE) {
+    /* Number of (index, bit_reverse(index)) pairs with index < bit_reverse */
+    int lim = (((1 << LOG_SIZE) - (1 << (LOG_SIZE / 2))) / 2);
+
+    for (int id = (int)threadIdx.x; id < lim; id += (int)blockDim.x) {
+        /* Reconstruct (col, row) from the flat index id */
         int offset = 0;
         int col = 1;
         int row = 0;
         for (int i = 1; i < (1 << (LOG_SIZE / 2)); i++) {
-            int ri = reverse<LOG_SIZE / 2>(i);
+            int ri = bit_reverse(i, LOG_SIZE / 2);
             if (id - offset >= 0) {
                 col = i;
                 row = id - offset;
             }
             offset += ri;
         }
+
         int up = row;
-        int pu = reverse<LOG_SIZE / 2>(row);
-        int esab = reverse<LOG_SIZE / 2>(col);
+        int pu = bit_reverse(row, LOG_SIZE / 2);
+        int esab = bit_reverse(col, LOG_SIZE / 2);
+
         if (LOG_SIZE % 2) {
+            /* Odd LOG_SIZE: two interleaved swaps */
             {
                 int index = (up << ((LOG_SIZE / 2) + 1)) | col;
                 int xendi = (esab << ((LOG_SIZE / 2) + 1)) | pu;
-                // Swap
-                T tmp = signal[index];
+                TYPE tmp = signal[index];
                 signal[index] = signal[xendi];
                 signal[xendi] = tmp;
             }
             {
-                int index = (up << ((LOG_SIZE / 2) + 1)) | 1 << (LOG_SIZE / 2) | col;
-                int xendi = (esab << ((LOG_SIZE / 2) + 1)) | 1 << (LOG_SIZE / 2) | pu;
-                // Swap
-                T tmp = signal[index];
+                int index = (up << ((LOG_SIZE / 2) + 1)) | (1 << (LOG_SIZE / 2)) | col;
+                int xendi = (esab << ((LOG_SIZE / 2) + 1)) | (1 << (LOG_SIZE / 2)) | pu;
+                TYPE tmp = signal[index];
                 signal[index] = signal[xendi];
                 signal[xendi] = tmp;
             }
         } else {
+            /* Even LOG_SIZE: single swap */
             int index = (up << (LOG_SIZE / 2)) | col;
             int xendi = (esab << (LOG_SIZE / 2)) | pu;
-            // Swap
-            T tmp = signal[index];
+            TYPE tmp = signal[index];
             signal[index] = signal[xendi];
             signal[xendi] = tmp;
         }
     }
 }
 
-template <typename T, unsigned char LOG_BLOCK_WIDTH>
-void shuffle_batch(kernel_arg_t *__UNIFORM__ arg) {
-    constexpr unsigned BUF_ELEMS = (1 << LOG_BLOCK_WIDTH) * (1 << LOG_BLOCK_WIDTH);
-
-    auto input = reinterpret_cast<int *>(arg->input);
-    auto pages = reinterpret_cast<const unsigned *>(arg->pages);
-    auto scratch_pool = reinterpret_cast<int *>(arg->scratch_pool);
-    auto log_n = reinterpret_cast<unsigned int *>(arg->log_n);
-
-    int *buf = scratch_pool + (unsigned long)blockIdx.x * BUF_ELEMS;
-    unsigned src_page = pages[blockIdx.x];
-    unsigned not_is_odd = blockIdx.x % 2 ? 0 : 1;
-    unsigned dst_page = pages[((blockIdx.x / 2) * 2) + not_is_odd];
-
-    mem2buffer<int, LOG_BLOCK_WIDTH>(src_page, *log_n, input, buf);
-    __syncthreads();
-    shuffle<T, 2 * LOG_BLOCK_WIDTH>(buf);
-    __syncthreads();
-    buffer2mem<int, LOG_BLOCK_WIDTH>(dst_page, *log_n, buf, input);
-}
-
-template <typename T, unsigned char LOG_BLOCK_WIDTH>
-void shuffle_batch_diag(kernel_arg_t *__UNIFORM__ arg) {
-    constexpr unsigned BUF_ELEMS = (1 << LOG_BLOCK_WIDTH) * (1 << LOG_BLOCK_WIDTH);
-    auto input = reinterpret_cast<int *>(arg->input);
-    auto pages = reinterpret_cast<const unsigned *>(arg->pages);
-    auto scratch_pool = reinterpret_cast<int *>(arg->scratch_pool);
-    auto log_n = reinterpret_cast<unsigned int *>(arg->log_n);
-    T *buf = scratch_pool + (unsigned long)blockIdx.x * BUF_ELEMS;
-    unsigned page = pages[blockIdx.x];
-
-    mem2buffer<T, LOG_BLOCK_WIDTH>(page, *log_n, input, buf);
-    __syncthreads();
-
-    shuffle<T, 2 * LOG_BLOCK_WIDTH>(buf);
-    __syncthreads();
-    buffer2mem<T, LOG_BLOCK_WIDTH>(page, *log_n, buf, input);
-}
-
-template <unsigned LOG_BLOCK_WIDTH>
-unsigned int gen_page(unsigned log_n, unsigned int prev) {
-    constexpr unsigned char NUM_B_BITS = log_n - (2 * LOG_BLOCK_WIDTH);
-    unsigned int is_odd = NUM_B_BITS % 2;
-    unsigned int hmax = 1 << (NUM_B_BITS / 2);
-    unsigned int mid_point = is_odd ? hmax & prev : 0;
-    unsigned int lo = prev & (hmax - 1);
-    unsigned int rlo = reverse<NUM_B_BITS / 2>(lo);
-    unsigned int up = prev >> ((NUM_B_BITS / 2) + is_odd);
-    // In case we reached the last value, return 0 to signal
-    // that there's no next value
-    if (prev == (1 << NUM_B_BITS) - 1)
-        return 0;
-    // If we've reached a symetrical point, go down a row
-    if (rlo == up) {
-        return 0 | mid_point | (lo + 1);
-    } else {
-        // Otherwise, move normally
-        return ((up + 1) << ((NUM_B_BITS / 2) + is_odd)) | mid_point | lo;
+/* ------------------------------------------------------------------ */
+/*  mem2buffer – gather a tile from global memory into local scratch   */
+/*  Mirrors the CUDA __device__ template mem2buffer<T,LOG_N,LBW>.     */
+/* ------------------------------------------------------------------ */
+static void mem2buffer_local(unsigned int page, const TYPE *__restrict__ src,
+                             TYPE *__restrict__ dst) {
+    for (unsigned a = threadIdx.x; a < BLOCK_SIZE; a += blockDim.x) {
+        unsigned src_base = (a << (LOG_N - LOG_BLOCK_WIDTH)) | (page << LOG_BLOCK_WIDTH);
+        unsigned dst_base = a << LOG_BLOCK_WIDTH;
+        for (unsigned i = 0; i < BLOCK_SIZE; i++)
+            dst[dst_base + i] = src[src_base + i];
     }
 }
+
+/* ------------------------------------------------------------------ */
+/*  buffer2mem – scatter local scratch back to global memory           */
+/*  Mirrors the CUDA __device__ template buffer2mem<T,LOG_N,LBW>.     */
+/* ------------------------------------------------------------------ */
+static void buffer2mem_local(unsigned int page, const TYPE *__restrict__ src,
+                             TYPE *__restrict__ dst) {
+    for (unsigned a = threadIdx.x; a < BLOCK_SIZE; a += blockDim.x) {
+        unsigned dst_base = (a << (LOG_N - LOG_BLOCK_WIDTH)) | (page << LOG_BLOCK_WIDTH);
+        unsigned src_base = a << LOG_BLOCK_WIDTH;
+        for (unsigned i = 0; i < BLOCK_SIZE; i++)
+            dst[dst_base + i] = src[src_base + i];
+    }
+}
+
+/* ------------------------------------------------------------------ */
+/*  Kernel body                                                         */
+/*                                                                      */
+/*  One Vortex "block" (workgroup) handles one page, exactly as one    */
+/*  CUDA thread-block handled one page in the original.                */
+/*                                                                      */
+/*  Grid mapping:                                                       */
+/*    gridDim.x  = num_pages  (set by vx_spawn_threads in main.cpp)   */
+/*    blockDim.x = THREAD_LIMIT (32) – set in main.cpp                 */
+/*                                                                      */
+/*  The per-block scratch buffer comes from a pre-allocated pool in    */
+/*  global memory (scratch_pool) exactly as in the CUDA version.       */
+/*  __local_mem could be used if BUF_ELEMS*sizeof(TYPE) ≤ local store; */
+/*  using the global-memory pool mirrors the CUDA design faithfully.   */
+/* ------------------------------------------------------------------ */
+void kernel_body(kernel_arg_t *__UNIFORM__ arg) {
+    TYPE *input = reinterpret_cast<TYPE *>(arg->input_addr);
+    const uint32_t *pages = reinterpret_cast<const uint32_t *>(arg->pages_addr);
+    TYPE *scratch_pool = reinterpret_cast<TYPE *>(arg->scratch_addr);
+
+    /* Each block gets its own scratch slice – mirrors CUDA indexing */
+    TYPE *buf = scratch_pool + (unsigned long)blockIdx.x * BUF_ELEMS;
+
+    if (arg->is_diag) {
+        /* ── diagonal pages (libra_batch_diag) ── */
+        unsigned page = pages[blockIdx.x];
+
+        mem2buffer_local(page, input, buf);
+        __syncthreads();
+
+        libra_local(buf, 2 * LOG_BLOCK_WIDTH);
+        __syncthreads();
+
+        buffer2mem_local(page, buf, input);
+
+    } else {
+        /* ── off-diagonal pairs (libra_batch) ── */
+        unsigned src_page = pages[blockIdx.x];
+        unsigned not_is_odd = (blockIdx.x % 2) ? 0u : 1u;
+        unsigned dst_page = pages[((blockIdx.x / 2) * 2) + not_is_odd];
+
+        mem2buffer_local(src_page, input, buf);
+        __syncthreads();
+
+        libra_local(buf, 2 * LOG_BLOCK_WIDTH);
+        __syncthreads();
+
+        buffer2mem_local(dst_page, buf, input);
+    }
+}
+
+/* ------------------------------------------------------------------ */
+/*  Kernel entry point – reads kernel_arg_t from MSCRATCH CSR and      */
+/*  launches one workgroup per page.                                    */
+/* ------------------------------------------------------------------ */
 int main() {
-    kernel_arg_t *arg = (kernel_arg_t *)csr_read(VX_CSR_MSCRATCH);
-    return vx_spawn_threads(1, &arg->threads, nullptr,
-                            (vx_kernel_func_cb)shuffle_batch<int, LOG_BLOCK_WIDTH_TEST>,
-                            arg);
+    kernel_arg_t *arg = reinterpret_cast<kernel_arg_t *>(csr_read(VX_CSR_MSCRATCH));
 
-    int num_sm = vx_num_cores();
-    int max_blocks_per_sm = vx_num_threads();
-    const unsigned hw_concurrency =
-        static_cast<unsigned>(((num_sm * max_blocks_per_sm) / 2) * 2);
-    std::vector<unsigned> pages;
-    std::vector<unsigned> diag;
-    unsigned b = 0;
-    do {
-        unsigned rb = reverse(&arg->log_n - (2 * LOG_BLOCK_WIDTH_TEST), b);
-        if (b != rb) {
-            pages.push_back(b);
-            pages.push_back(rb);
-        } else {
-            diag.push_back(b);
-        }
-        b = gen_page<LOG_BLOCK_WIDTH_TEST>(&arg->log_n, b);
-    } while (b);
-
-    // auto input = reinterpret_cast<int *>(arg->input);
-    // input[0] = vx_num_threads();
-    // input[1] = vx_num_warps();
-    // input[2] = vx_num_cores();
-
-    // printf("Num Threads: %d,\n Num Warps: %d,\n Num Cores: %d\n", vx_num_threads(),
-    // vx_num_warps(), vx_num_cores());
+    /*
+     * Launch a 1-D grid of num_pages workgroups.
+     * block_dim == nullptr → Vortex uses its default warp/thread config.
+     * The host sets up two separate launches (off-diag then diagonal),
+     * each with a freshly uploaded kernel_arg_t; this call handles one.
+     */
+    return vx_spawn_threads(1, &arg->num_pages, /* grid_dim  */
+                            nullptr,            /* block_dim – use HW default */
+                            reinterpret_cast<vx_kernel_func_cb>(kernel_body), arg);
 }

@@ -2,48 +2,51 @@
 #define _COMMON_H_
 
 #include <cstdint>
+
+/*
+ * Compile-time parameters (can be overridden via -D flags):
+ *
+ *   LOG_N            – log2 of the total number of elements (e.g. 20 → 1M)
+ *   LOG_BLOCK_WIDTH  – log2 of the tile edge length; must satisfy
+ *                      2*LOG_BLOCK_WIDTH < 18 - log2(sizeof(TYPE))
+ *                      so each scratch tile fits in L1 cache.
+ *   TYPE             – element type (default: float)
+ */
 #ifndef TYPE
 #define TYPE float
 #endif
 
+#ifndef LOG_N
+#define LOG_N 20
+#endif
+
+#ifndef LOG_BLOCK_WIDTH
+#define LOG_BLOCK_WIDTH 4 /* tile edge = 16, tile area = 256 */
+#endif
+
+/* Derived constants – mirroring the CUDA constexpr statics */
+#define BLOCK_SIZE (1u << LOG_BLOCK_WIDTH)
+#define BUF_ELEMS (BLOCK_SIZE * BLOCK_SIZE) /* elements per scratch tile */
+#define NUM_B_BITS (LOG_N - 2 * LOG_BLOCK_WIDTH)
+#define B_SIZE (1u << NUM_B_BITS)
+#define N_ELEMS (1ul << LOG_N)
+
+/*
+ * Kernel argument block.
+ *
+ * input_addr   – device address of the data array  (N_ELEMS × sizeof(TYPE))
+ * pages_addr   – device address of the page-index array (num_pages × uint32)
+ * scratch_addr – device address of the scratch pool  (num_blocks × BUF_ELEMS ×
+ * sizeof(TYPE)) num_pages    – length of the pages array (== gridDim for one launch)
+ * is_diag      – 0 → off-diagonal pairs (libra_batch)
+ *                1 → diagonal pages    (libra_batch_diag)
+ */
 typedef struct {
-    uint64_t input;
-    uint64_t pages;
-    uint64_t scratch_pool;
-    uint64_t log_n;
+    uint64_t input_addr;
+    uint64_t pages_addr;
+    uint64_t scratch_addr;
+    uint32_t num_pages;
+    uint32_t is_diag;
 } kernel_arg_t;
 
-template <unsigned char LOG_N>
-void advance_index_and_reversed(unsigned long &index, unsigned long &reversed) {
-    unsigned long temp = index + 1;
-    unsigned long tail = (index ^ temp);
-    // tail is of the form 00...011...1
-    // It is a mask representing the number of bitflips
-    index = temp;
-    // create the reverse of tail, which is of form 11...100...0:
-    //
-    // Because when incrementing a number the number of bitflips
-    // is a continuous string of 1's until cout is zero
-    // We can simply shift the mask to the left and have the
-    // reverse of the bitflip mask
-    auto shift = __builtin_clzl(tail);
-    tail <<= shift;
-    tail >>= ((sizeof(unsigned long) * 8) - LOG_N);
-
-    // xor reversed with reversed tail gives reversed of index+1:
-    // The bitflips can be propageted via a simple xor
-    reversed ^= tail;
-}
-template <const char W> int reverse(int x) {
-    int reversed = 0;
-    for (int j = 0; j < W; j++) // log2(N) = 3 bits needed to represent indices
-        reversed = (reversed << 1) | (x >> j & 1);
-    return reversed;
-}
-int reverse(int w, int x) {
-    int reversed = 0;
-    for (int j = 0; j < w; j++) // log2(N) = 3 bits needed to represent indices
-        reversed = (reversed << 1) | (x >> j & 1);
-    return reversed;
-}
-#endif
+#endif /* _COMMON_H_ */
