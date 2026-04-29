@@ -7,11 +7,10 @@
 #endif
 
 typedef struct {
-    uint32_t len;
     uint32_t size;
     uint64_t A_addr;
-    uint64_t B_addr;
-    uint64_t C_addr;
+    uint64_t L_addr;
+    uint64_t U_addr;
 } kernel_arg_t;
 
 #endif

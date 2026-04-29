@@ -3,6 +3,7 @@ include $(ROOT_DIR)/config.mk
 
 all:
 	$(MAKE) -C vecadd
+	$(MAKE) -C lu_decomp
 	$(MAKE) -C sgemm
 	$(MAKE) -C conv3
 	$(MAKE) -C psort
@@ -25,6 +26,7 @@ all:
 
 run-simx:
 	$(MAKE) -C vecadd run-simx
+	$(MAKE) -C lu_decomp run-simx
 	$(MAKE) -C sgemm run-simx
 	$(MAKE) -C conv3 run-simx
 	$(MAKE) -C psort run-simx
@@ -46,6 +48,7 @@ run-simx:
 
 run-rtlsim:
 	$(MAKE) -C vecadd run-rtlsim
+	$(MAKE) -C lu_decomp run-rtlsim
 	$(MAKE) -C sgemm run-rtlsim
 	$(MAKE) -C conv3 run-rtlsim
 	$(MAKE) -C psort run-rtlsim
@@ -67,6 +70,7 @@ run-rtlsim:
 
 clean:
 	$(MAKE) -C vecadd clean
+	$(MAKE) -C lu_decomp clean
 	$(MAKE) -C sgemm clean
 	$(MAKE) -C conv3 clean
 	$(MAKE) -C psort clean

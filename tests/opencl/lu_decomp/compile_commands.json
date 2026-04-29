@@ -1,0 +1,26 @@
+[
+  {
+    "arguments": [
+      "/usr/bin/g++",
+      "-std=c++17",
+      "-Wall",
+      "-Wextra",
+      "-Wfatal-errors",
+      "-Wno-deprecated-declarations",
+      "-Wno-unused-parameter",
+      "-Wno-narrowing",
+      "-pthread",
+      "-I/root/tools/pocl/include",
+      "-I/root/tools/pocl/include/CL/opencl.h",
+      "-O2",
+      "-DNDEBUG",
+      "-c",
+      "-o",
+      "main.cc.o",
+      "/vortex/tests/opencl/lu_decomp/main.cc"
+    ],
+    "directory": "/vortex/build/tests/opencl/lu_decomp",
+    "file": "/vortex/tests/opencl/lu_decomp/main.cc",
+    "output": "/vortex/build/tests/opencl/lu_decomp/main.cc.o"
+  }
+]
