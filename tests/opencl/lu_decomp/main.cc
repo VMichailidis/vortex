@@ -1,3 +1,5 @@
+#include "CL/cl.h"
+#include "CL/cl_platform.h"
 #include "common.h"
 #include <CL/opencl.h>
 #include <assert.h>
@@ -76,7 +78,7 @@ template <> class Comparator<int> {
 template <> class Comparator<float> {
   public:
     static const char *type_str() { return "float"; }
-    static int generate() { return static_cast<float>(rand()) / RAND_MAX; }
+    static float generate() { return static_cast<float>(rand()) / RAND_MAX; }
     static bool compare(float a, float b, int index, int errors) {
         union fi_t {
             float f;
@@ -96,9 +98,60 @@ template <> class Comparator<float> {
     }
 };
 
-static void vecadd_cpu(TYPE *C, const TYPE *A, const TYPE *B, int N) {
-    for (int i = 0; i < N; ++i) {
-        C[i] = A[i] + B[i];
+static void vecadd_cpu(TYPE *L, TYPE *U, TYPE *A, int N) {
+    memset(L, 0, sizeof(TYPE) * N * N);
+    memset(U, 0, sizeof(TYPE) * N * N);
+
+    // Decomposing matrix into Upper and Lower
+    // triangular matrix
+    for (int i = 0; i < N; i++) {
+        // Upper Triangular
+        for (int k = i; k < N; k++) {
+            // Summation of L(i, j) * U(j, k)
+            TYPE sum = 0;
+            for (int j = 0; j < i; j++)
+                sum += (L[i * N + j] * U[j * N + k]);
+
+            // Evaluating U(i, k)
+            U[i * N + k] = A[i * N + k] - sum;
+        }
+
+        // Lower Triangular
+        for (int k = i; k < N; k++) {
+            if (i == k)
+                L[i * N + i] = 1; // Diagonal as 1
+            else {
+                // Summation of L(k, j) * U(j, i)
+                TYPE sum = 0;
+                for (int j = 0; j < i; j++)
+                    sum += (L[k * N + j] * U[j * N + i]);
+
+                // Evaluating L(k, i)
+                L[k * N + i] = (A[k * N + i] - sum) / U[i * N + i];
+            }
+        }
+    }
+}
+static void vecadd_alt(TYPE *L, TYPE *U, TYPE *A, int N) {
+    memset(L, 0, sizeof(TYPE) * N * N);
+    memset(U, 0, sizeof(TYPE) * N * N);
+
+    // Decomposing matrix into Upper and Lower
+    // triangular matrix
+    for (int i = 0; i < N; i++) {
+        // Upper Triangular
+        for (int k = i; k < N; k++) {
+            // Summation of L(i, j) * U(j, k)
+            TYPE sum_l = 0;
+            TYPE sum_u = 0;
+            for (int j = 0; j < i; j++) {
+                sum_l += (L[i * N + j] * U[j * N + k]);
+                sum_u += (L[k * N + j] * U[j * N + i]);
+            }
+            // Evaluating U(i, k)
+            U[i * N + k] = A[i * N + k] - sum_l;
+            L[k * N + i] = (i == k) ? 1.0 : (A[k * N + i] - sum_u) / U[i * N + i];
+        }
     }
 }
 
@@ -108,8 +161,8 @@ cl_command_queue commandQueue = NULL;
 cl_program program = NULL;
 cl_kernel kernel = NULL;
 cl_mem a_memobj = NULL;
-cl_mem b_memobj = NULL;
-cl_mem c_memobj = NULL;
+cl_mem l_memobj = NULL;
+cl_mem u_memobj = NULL;
 uint8_t *kernel_bin = NULL;
 
 static void cleanup() {
@@ -121,10 +174,10 @@ static void cleanup() {
         clReleaseProgram(program);
     if (a_memobj)
         clReleaseMemObject(a_memobj);
-    if (b_memobj)
-        clReleaseMemObject(b_memobj);
-    if (c_memobj)
-        clReleaseMemObject(c_memobj);
+    if (l_memobj)
+        clReleaseMemObject(l_memobj);
+    if (u_memobj)
+        clReleaseMemObject(u_memobj);
     if (context)
         clReleaseContext(context);
     if (device_id)
@@ -173,10 +226,11 @@ int main(int argc, char **argv) {
     context = CL_CHECK2(clCreateContext(NULL, 1, &device_id, NULL, NULL, &_err));
 
     printf("Allocate device buffers\n");
-    size_t nbytes = size * sizeof(TYPE);
+    auto size_sq = size * size;
+    size_t nbytes = size_sq * sizeof(TYPE);
     a_memobj = CL_CHECK2(clCreateBuffer(context, CL_MEM_READ_ONLY, nbytes, NULL, &_err));
-    b_memobj = CL_CHECK2(clCreateBuffer(context, CL_MEM_READ_ONLY, nbytes, NULL, &_err));
-    c_memobj = CL_CHECK2(clCreateBuffer(context, CL_MEM_WRITE_ONLY, nbytes, NULL, &_err));
+    l_memobj = CL_CHECK2(clCreateBuffer(context, CL_MEM_READ_WRITE, nbytes, NULL, &_err));
+    u_memobj = CL_CHECK2(clCreateBuffer(context, CL_MEM_READ_WRITE, nbytes, NULL, &_err));
 
     printf("Create program from kernel source\n");
     if (0 != read_kernel_file("kernel.cl", &kernel_bin, &kernel_size))
@@ -191,19 +245,21 @@ int main(int argc, char **argv) {
     kernel = CL_CHECK2(clCreateKernel(program, KERNEL_NAME, &_err));
 
     // Set kernel arguments
-    CL_CHECK(clSetKernelArg(kernel, 0, sizeof(cl_mem), (void *)&a_memobj));
-    CL_CHECK(clSetKernelArg(kernel, 1, sizeof(cl_mem), (void *)&b_memobj));
-    CL_CHECK(clSetKernelArg(kernel, 2, sizeof(cl_mem), (void *)&c_memobj));
+    CL_CHECK(clSetKernelArg(kernel, 0, sizeof(cl_mem), (void *)&l_memobj));
+    CL_CHECK(clSetKernelArg(kernel, 1, sizeof(cl_mem), (void *)&u_memobj));
+    CL_CHECK(clSetKernelArg(kernel, 2, sizeof(cl_mem), (void *)&a_memobj));
 
     // Allocate memories for input arrays and output arrays.
-    std::vector<TYPE> h_a(size);
-    std::vector<TYPE> h_b(size);
-    std::vector<TYPE> h_c(size);
+    std::vector<TYPE> h_l(size_sq);
+    std::vector<TYPE> h_u(size_sq);
+    std::vector<TYPE> h_a(size_sq);
+    memset(h_l.data(), 0, sizeof(TYPE) * size_sq);
+    memset(h_u.data(), 0, sizeof(TYPE) * size_sq);
 
     // Generate input values
-    for (uint32_t i = 0; i < size; ++i) {
-        h_a[i] = Comparator<TYPE>::generate();
-        h_b[i] = Comparator<TYPE>::generate();
+    for (uint32_t i = 0; i < size_sq; ++i) {
+        TYPE t = Comparator<TYPE>::generate();
+        h_a[i] = t;
     }
 
     // Creating command queue
@@ -212,14 +268,12 @@ int main(int argc, char **argv) {
     printf("Upload source buffers\n");
     CL_CHECK(clEnqueueWriteBuffer(commandQueue, a_memobj, CL_TRUE, 0, nbytes, h_a.data(),
                                   0, NULL, NULL));
-    CL_CHECK(clEnqueueWriteBuffer(commandQueue, b_memobj, CL_TRUE, 0, nbytes, h_b.data(),
-                                  0, NULL, NULL));
 
     printf("Execute the kernel\n");
-    size_t global_work_size[1] = {size};
+    size_t global_work_size[2] = {size, size};
     size_t local_work_size[1] = {1};
     auto time_start = std::chrono::high_resolution_clock::now();
-    CL_CHECK(clEnqueueNDRangeKernel(commandQueue, kernel, 1, NULL, global_work_size,
+    CL_CHECK(clEnqueueNDRangeKernel(commandQueue, kernel, 2, NULL, global_work_size,
                                     local_work_size, 0, NULL, NULL));
     CL_CHECK(clFinish(commandQueue));
     auto time_end = std::chrono::high_resolution_clock::now();
@@ -229,15 +283,26 @@ int main(int argc, char **argv) {
     printf("Elapsed time: %lg ms\n", elapsed);
 
     printf("Download destination buffer\n");
-    CL_CHECK(clEnqueueReadBuffer(commandQueue, c_memobj, CL_TRUE, 0, nbytes, h_c.data(),
+    CL_CHECK(clEnqueueReadBuffer(commandQueue, l_memobj, CL_TRUE, 0, nbytes, h_l.data(),
+                                 0, NULL, NULL));
+    CL_CHECK(clEnqueueReadBuffer(commandQueue, u_memobj, CL_TRUE, 0, nbytes, h_u.data(),
                                  0, NULL, NULL));
 
     printf("Verify result\n");
-    std::vector<TYPE> h_ref(size);
-    vecadd_cpu(h_ref.data(), h_a.data(), h_b.data(), size);
+    std::vector<TYPE> h_ref_l(size_sq);
+    std::vector<TYPE> h_ref_u(size_sq);
+    vecadd_cpu(h_ref_l.data(), h_ref_u.data(), h_a.data(), size);
+    // vecadd_alt(h_l.data(), h_u.data(), h_a.data(), size);
     int errors = 0;
-    for (uint32_t i = 0; i < size; ++i) {
-        if (!Comparator<TYPE>::compare(h_c[i], h_ref[i], i, errors)) {
+    printf("Testing L\n");
+    for (uint32_t i = 0; i < size_sq; ++i) {
+        if (!Comparator<TYPE>::compare(h_ref_l[i], h_l[i], i, errors)) {
+            ++errors;
+        }
+    }
+    printf("Testing U\n");
+    for (uint32_t i = 0; i < size_sq; ++i) {
+        if (!Comparator<TYPE>::compare(h_ref_u[i], h_u[i], i, errors)) {
             ++errors;
         }
     }
@@ -245,6 +310,19 @@ int main(int argc, char **argv) {
         printf("PASSED!\n");
     } else {
         printf("FAILED! - %d errors\n", errors);
+    }
+    for (uint32_t i = 0; i < size; i++) {
+        for (uint32_t j = 0; j < size; j++) {
+            printf("%f, ", h_l[i * size + j]);
+        }
+        printf("\n");
+    }
+    printf("\n");
+    for (uint32_t i = 0; i < size; i++) {
+        for (uint32_t j = 0; j < size; j++) {
+            printf("%f, ", h_ref_l[i * size + j]);
+        }
+        printf("\n");
     }
 
     // Clean up
