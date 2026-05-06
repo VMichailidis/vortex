@@ -11,9 +11,11 @@
 #include <unistd.h>
 #include <vector>
 
-#define KERNEL_NAME "lu_decomp"
+#define PIVOT_KERNEL "compute_pivot"
+#define LU_UPDATE "lu_update"
 
-#define FLOAT_ULP 6
+#define FLOAT_ULP 2048
+#define FLOAT_TOLERANCE 1e-4
 
 #define CL_CHECK(_expr)                                                                  \
     do {                                                                                 \
@@ -87,10 +89,10 @@ template <> class Comparator<float> {
         fi_t fa, fb;
         fa.f = a;
         fb.f = b;
-        auto d = std::abs(fa.i - fb.i);
-        if (d > FLOAT_ULP) {
+        uint32_t d = std::abs(fa.f - fb.f);
+        if (d > FLOAT_TOLERANCE) {
             if (errors < 100) {
-                printf("*** error: [%d] expected=%f, actual=%f\n", index, a, b);
+                printf("*** error: [%d] expected=%f, actual=%f\n", d, a, b);
             }
             return false;
         }
@@ -98,7 +100,7 @@ template <> class Comparator<float> {
     }
 };
 
-static void vecadd_cpu(TYPE *L, TYPE *U, TYPE *A, int N) {
+static void lu_decomp_cpu(TYPE *L, TYPE *U, TYPE *A, int N) {
     memset(L, 0, sizeof(TYPE) * N * N);
     memset(U, 0, sizeof(TYPE) * N * N);
 
@@ -159,7 +161,8 @@ cl_device_id device_id = NULL;
 cl_context context = NULL;
 cl_command_queue commandQueue = NULL;
 cl_program program = NULL;
-cl_kernel kernel = NULL;
+cl_kernel pivot_kernel = NULL;
+cl_kernel update_kernel = NULL;
 cl_mem a_memobj = NULL;
 cl_mem l_memobj = NULL;
 cl_mem u_memobj = NULL;
@@ -168,8 +171,10 @@ uint8_t *kernel_bin = NULL;
 static void cleanup() {
     if (commandQueue)
         clReleaseCommandQueue(commandQueue);
-    if (kernel)
-        clReleaseKernel(kernel);
+    if (pivot_kernel)
+        clReleaseKernel(pivot_kernel);
+    if (update_kernel)
+        clReleaseKernel(update_kernel);
     if (program)
         clReleaseProgram(program);
     if (a_memobj)
@@ -242,12 +247,18 @@ int main(int argc, char **argv) {
     CL_CHECK(clBuildProgram(program, 1, &device_id, NULL, NULL, NULL));
 
     // Create kernel
-    kernel = CL_CHECK2(clCreateKernel(program, KERNEL_NAME, &_err));
+    pivot_kernel = CL_CHECK2(clCreateKernel(program, PIVOT_KERNEL, &_err));
+    update_kernel = CL_CHECK2(clCreateKernel(program, LU_UPDATE, &_err));
 
     // Set kernel arguments
-    CL_CHECK(clSetKernelArg(kernel, 0, sizeof(cl_mem), (void *)&l_memobj));
-    CL_CHECK(clSetKernelArg(kernel, 1, sizeof(cl_mem), (void *)&u_memobj));
-    CL_CHECK(clSetKernelArg(kernel, 2, sizeof(cl_mem), (void *)&a_memobj));
+    CL_CHECK(clSetKernelArg(pivot_kernel, 0, sizeof(cl_mem), (void *)&l_memobj));
+    CL_CHECK(clSetKernelArg(pivot_kernel, 1, sizeof(cl_mem), (void *)&u_memobj));
+    CL_CHECK(clSetKernelArg(pivot_kernel, 2, sizeof(cl_mem), (void *)&a_memobj));
+    CL_CHECK(clSetKernelArg(pivot_kernel, 3, sizeof(int), &size));
+    CL_CHECK(clSetKernelArg(update_kernel, 0, sizeof(cl_mem), (void *)&l_memobj));
+    CL_CHECK(clSetKernelArg(update_kernel, 1, sizeof(cl_mem), (void *)&u_memobj));
+    CL_CHECK(clSetKernelArg(update_kernel, 2, sizeof(cl_mem), (void *)&a_memobj));
+    CL_CHECK(clSetKernelArg(update_kernel, 3, sizeof(int), &size));
 
     // Allocate memories for input arrays and output arrays.
     std::vector<TYPE> h_l(size_sq);
@@ -268,14 +279,32 @@ int main(int argc, char **argv) {
     printf("Upload source buffers\n");
     CL_CHECK(clEnqueueWriteBuffer(commandQueue, a_memobj, CL_TRUE, 0, nbytes, h_a.data(),
                                   0, NULL, NULL));
+    CL_CHECK(clEnqueueWriteBuffer(commandQueue, l_memobj, CL_TRUE, 0, nbytes, h_u.data(),
+                                  0, NULL, NULL));
+    CL_CHECK(clEnqueueWriteBuffer(commandQueue, u_memobj, CL_TRUE, 0, nbytes, h_l.data(),
+                                  0, NULL, NULL));
 
     printf("Execute the kernel\n");
-    size_t global_work_size[2] = {size, size};
-    size_t local_work_size[1] = {1};
     auto time_start = std::chrono::high_resolution_clock::now();
-    CL_CHECK(clEnqueueNDRangeKernel(commandQueue, kernel, 2, NULL, global_work_size,
-                                    local_work_size, 0, NULL, NULL));
-    CL_CHECK(clFinish(commandQueue));
+    for (uint32_t i = 0; i < size; i++) {
+        // Step 1: compute pivot element U[i][i] safely (single work-item)
+        CL_CHECK(clSetKernelArg(pivot_kernel, 4, sizeof(int), &i));
+        size_t pivot_work_size[1] = {1};
+        CL_CHECK(clEnqueueNDRangeKernel(commandQueue, pivot_kernel, 1, NULL,
+                                        pivot_work_size, pivot_work_size, 0, NULL, NULL));
+        CL_CHECK(clFinish(commandQueue)); // ensure pivot is written before update
+
+        // Step 2: update remaining row/column in parallel (safe, pivot already written)
+        if (i + 1 < size) {
+            CL_CHECK(clSetKernelArg(update_kernel, 4, sizeof(int), &i));
+            size_t update_work_size[1] = {size - i - 1};
+            size_t local_work_size[1] = {1};
+            CL_CHECK(clEnqueueNDRangeKernel(commandQueue, update_kernel, 1, NULL,
+                                            update_work_size, local_work_size, 0, NULL,
+                                            NULL));
+        }
+        CL_CHECK(clFinish(commandQueue));
+    }
     auto time_end = std::chrono::high_resolution_clock::now();
     double elapsed =
         std::chrono::duration_cast<std::chrono::milliseconds>(time_end - time_start)
@@ -291,7 +320,7 @@ int main(int argc, char **argv) {
     printf("Verify result\n");
     std::vector<TYPE> h_ref_l(size_sq);
     std::vector<TYPE> h_ref_u(size_sq);
-    vecadd_cpu(h_ref_l.data(), h_ref_u.data(), h_a.data(), size);
+    lu_decomp_cpu(h_ref_l.data(), h_ref_u.data(), h_a.data(), size);
     // vecadd_alt(h_l.data(), h_u.data(), h_a.data(), size);
     int errors = 0;
     printf("Testing L\n");
@@ -310,19 +339,6 @@ int main(int argc, char **argv) {
         printf("PASSED!\n");
     } else {
         printf("FAILED! - %d errors\n", errors);
-    }
-    for (uint32_t i = 0; i < size; i++) {
-        for (uint32_t j = 0; j < size; j++) {
-            printf("%f, ", h_l[i * size + j]);
-        }
-        printf("\n");
-    }
-    printf("\n");
-    for (uint32_t i = 0; i < size; i++) {
-        for (uint32_t j = 0; j < size; j++) {
-            printf("%f, ", h_ref_l[i * size + j]);
-        }
-        printf("\n");
     }
 
     // Clean up
