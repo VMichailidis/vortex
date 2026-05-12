@@ -14,8 +14,9 @@
 #define PIVOT_KERNEL "compute_pivot"
 #define LU_UPDATE "lu_update"
 
-#define FLOAT_ULP 2048
-#define FLOAT_TOLERANCE 1e-4
+#define FLOAT_ULP 6
+#define FLOAT_TOLERANCE 1e-3
+uint32_t size = 64;
 
 #define CL_CHECK(_expr)                                                                  \
     do {                                                                                 \
@@ -68,9 +69,10 @@ template <> class Comparator<int> {
     static int generate() { return rand(); }
     static bool compare(int a, int b, int index, int errors) {
         if (a != b) {
-            if (errors < 100) {
-                printf("*** error: [%d] expected=%d, actual=%d\n", index, a, b);
-            }
+            // if (errors < 100) {
+            printf("*** error: [%d][%d] expected=%d, actual=%d\n", index / size,
+                   index % size, a, b);
+            // }
             return false;
         }
         return true;
@@ -89,10 +91,12 @@ template <> class Comparator<float> {
         fi_t fa, fb;
         fa.f = a;
         fb.f = b;
-        uint32_t d = std::abs(fa.f - fb.f);
+        // uint32_t d = std::abs(fa.i - fb.i);
+        TYPE d = std::abs(a - b);
         if (d > FLOAT_TOLERANCE) {
             if (errors < 100) {
-                printf("*** error: [%d] expected=%f, actual=%f\n", d, a, b);
+                printf("*** error: [%d][%d] expected=%f, actual=%f\n", index / size,
+                       index % size, a, b);
             }
             return false;
         }
@@ -100,7 +104,7 @@ template <> class Comparator<float> {
     }
 };
 
-static void lu_decomp_cpu(TYPE *L, TYPE *U, TYPE *A, int N) {
+static void lu_decomp_alt(TYPE *L, TYPE *U, TYPE *A, int N) {
     memset(L, 0, sizeof(TYPE) * N * N);
     memset(U, 0, sizeof(TYPE) * N * N);
 
@@ -134,7 +138,7 @@ static void lu_decomp_cpu(TYPE *L, TYPE *U, TYPE *A, int N) {
         }
     }
 }
-static void vecadd_alt(TYPE *L, TYPE *U, TYPE *A, int N) {
+static void lu_decomp_cpu(TYPE *L, TYPE *U, TYPE *A, int N) {
     memset(L, 0, sizeof(TYPE) * N * N);
     memset(U, 0, sizeof(TYPE) * N * N);
 
@@ -192,8 +196,6 @@ static void cleanup() {
         free(kernel_bin);
 }
 
-uint32_t size = 64;
-
 static void show_usage() { printf("Usage: [-n size] [-h: help]\n"); }
 
 static void parse_args(int argc, char **argv) {
@@ -214,6 +216,8 @@ static void parse_args(int argc, char **argv) {
     }
 
     printf("Workload size=%d\n", size);
+    Comparator<TYPE> type;
+    printf("datatype %s\n", type.type_str());
 }
 
 int main(int argc, char **argv) {
@@ -320,7 +324,7 @@ int main(int argc, char **argv) {
     printf("Verify result\n");
     std::vector<TYPE> h_ref_l(size_sq);
     std::vector<TYPE> h_ref_u(size_sq);
-    lu_decomp_cpu(h_ref_l.data(), h_ref_u.data(), h_a.data(), size);
+    lu_decomp_alt(h_ref_l.data(), h_ref_u.data(), h_a.data(), size);
     // vecadd_alt(h_l.data(), h_u.data(), h_a.data(), size);
     int errors = 0;
     printf("Testing L\n");
