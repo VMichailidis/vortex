@@ -1,0 +1,40 @@
+[[language]]
+name = "cpp"
+language-servers = [
+  "clangd",
+]
+[language-server.clangd]
+command = "docker"
+file-types = [
+  "cc",
+  "ccm",
+  "cxx",
+  "cxxm",
+  "c++",
+  "c++m",
+  "cpp",
+  "cppm",
+  "cu",
+  "hxx",
+  "hpp",
+  "cuh",
+  "ino",
+  "cl"
+]
+# We use 'exec -i' to pipe stdin/stdout into the container
+args = [
+  "exec",
+  "-i",
+  "vortex-container",  # Your container name
+  "clangd",            # The command to run INSIDE the container
+  
+  # IMPORTANT: Map Host Path (Client) -> Container Path (Server)
+  # IMPORTANT: Verify that the host mapping is correct, if the repo gets moved, this will not work
+  "--path-mappings=/home/basil/scratchpad/vortex-container/container/vortex=/vortex",
+  
+  "--background-index",
+  "--clang-tidy",
+  "--header-insertion=iwyu",
+  "--completion-style=detailed",
+  "--function-arg-placeholders"
+]
