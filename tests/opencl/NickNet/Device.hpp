@@ -24,6 +24,8 @@ class Device {
         char device_string[1024];
         clGetDeviceInfo(device_id, CL_DEVICE_NAME, sizeof(device_string), &device_string,
                         NULL);
+        // Creating command queue
+        commandQueue = CL_CHECK2(clCreateCommandQueue(context, device_id, 0, &_err));
         printf("Using device: %s\n", device_string);
     }
     ~Device() {
