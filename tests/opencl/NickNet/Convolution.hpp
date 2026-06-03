@@ -12,13 +12,13 @@
 // Output: F channels of IN - K + 1 samples
 // Parameters: K: kernel size
 
-template <typename T, unsigned IN, unsigned K, unsigned C, unsigned F> class Convolution {
+template <typename T, uint32_t IN, uint32_t K, uint32_t C, uint32_t F> class Convolution {
   private:
     // Required to pass template params to kernel
-    unsigned in = IN;
-    unsigned k = K;
-    unsigned c = C;
-    unsigned f = F;
+    uint32_t in = IN;
+    uint32_t k = K;
+    uint32_t c = C;
+    uint32_t f = F;
 
   public:
     const unsigned OUT = IN - K + 1;
@@ -81,10 +81,10 @@ template <typename T, unsigned IN, unsigned K, unsigned C, unsigned F> class Con
         CL_CHECK(clSetKernelArg(kernel, 2, sizeof(cl_mem), (void *)&b_memobj));
         CL_CHECK(clSetKernelArg(kernel, 3, sizeof(cl_mem), (void *)&o_memobj));
 
-        CL_CHECK(clSetKernelArg(kernel, 4, sizeof(unsigned), &in));
-        CL_CHECK(clSetKernelArg(kernel, 5, sizeof(unsigned), &k));
-        CL_CHECK(clSetKernelArg(kernel, 6, sizeof(unsigned), &c));
-        CL_CHECK(clSetKernelArg(kernel, 7, sizeof(unsigned), &f));
+        CL_CHECK(clSetKernelArg(kernel, 4, sizeof(uint32_t), &in));
+        CL_CHECK(clSetKernelArg(kernel, 5, sizeof(uint32_t), &k));
+        CL_CHECK(clSetKernelArg(kernel, 6, sizeof(uint32_t), &c));
+        CL_CHECK(clSetKernelArg(kernel, 7, sizeof(uint32_t), &f));
         // Creating command queue
     }
 
@@ -102,21 +102,24 @@ template <typename T, unsigned IN, unsigned K, unsigned C, unsigned F> class Con
             free(kernel_bin);
         }
     }
-    void load_weights(std::vector<TYPE> w, std::vector<TYPE> b) {
+    void load_weights(TYPE *w, TYPE *b) {
+        CL_CHECK(clFinish(dev->commandQueue));
         CL_CHECK(clEnqueueWriteBuffer(dev->commandQueue, w_memobj, CL_TRUE, 0, w_nbytes,
-                                      w.data(), 0, NULL, NULL));
+                                      w, 0, NULL, NULL));
+        CL_CHECK(clFinish(dev->commandQueue));
         CL_CHECK(clEnqueueWriteBuffer(dev->commandQueue, b_memobj, CL_TRUE, 0, b_nbytes,
-                                      b.data(), 0, NULL, NULL));
+                                      b, 0, NULL, NULL));
     }
-    void load_input(std::vector<TYPE> i) {
+    void load_input(TYPE *i) {
+        CL_CHECK(clFinish(dev->commandQueue));
         CL_CHECK(clEnqueueWriteBuffer(dev->commandQueue, i_memobj, CL_TRUE, 0, i_nbytes,
-                                      i.data(), 0, NULL, NULL));
+                                      i, 0, NULL, NULL));
     }
 
-    void get_output(std::vector<TYPE> o) {
+    void get_output(TYPE *o) {
         CL_CHECK(clFinish(dev->commandQueue));
-        CL_CHECK(clEnqueueReadBuffer(dev->commandQueue, o_memobj, CL_TRUE, 0, o_nbytes,
-                                     o.data(), 0, NULL, NULL));
+        CL_CHECK(clEnqueueReadBuffer(dev->commandQueue, o_memobj, CL_TRUE, 0, o_nbytes, o,
+                                     0, NULL, NULL));
     }
 
     void run() {

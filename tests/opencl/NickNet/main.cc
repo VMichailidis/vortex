@@ -11,11 +11,11 @@
 #define FLOAT_ULP 6
 
 #define KERNEL_NAME "conv1"
-#define IN 128
+#define IN 32
 #define K 5
 #define F 8
 #define C 2
-#define OUT IN - K + 1
+#define OUT (IN - K + 1)
 
 static bool compare_equal(float a, float b) {
     union fi_t {
@@ -67,10 +67,10 @@ int main() {
     Device dev;
 
     Convolution<TYPE, IN, K, C, F> conv(dev);
-    conv.load_weights(h_w, h_b);
-    conv.load_input(h_i);
+    conv.load_weights(h_w.data(), h_b.data());
+    conv.load_input(h_i.data());
     conv.run();
-    conv.get_output(h_o);
+    conv.get_output(h_o.data());
     convolution_cpu(h_i.data(), h_w.data(), h_b.data(), ref_vec.data());
     int errors = 0;
     for (uint32_t i = 0; i < OUT * F; ++i) {
