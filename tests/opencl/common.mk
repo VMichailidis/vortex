@@ -82,13 +82,13 @@ OBJS := $(addsuffix .o, $(notdir $(SRCS)))
 
 all: $(PROJECT)
 
-%.cc.o: $(SRC_DIR)/%.cc
+%.cc.o: $(SRC_DIR)/%.cc $(SRC_DIR)/*.h $(SRC_DIR)/*.hpp
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
-%.cpp.o: $(SRC_DIR)/%.cpp
+%.cpp.o: $(SRC_DIR)/%.cpp $(SRC_DIR)/*.h $(SRC_DIR)/*.hpp
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
-%.c.o: $(SRC_DIR)/%.c
+%.c.o: $(SRC_DIR)/%.c $(SRC_DIR)/*.h $(SRC_DIR)/*.hpp
 	$(CC) $(CXXFLAGS) -c $< -o $@
 
 $(PROJECT): $(OBJS)
