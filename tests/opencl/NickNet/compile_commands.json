@@ -46,5 +46,51 @@
     "directory": "/vortex/build/tests/opencl/NickNet",
     "file": "/vortex/tests/opencl/NickNet/Convolution.hpp",
     "output": "/vortex/build/tests/opencl/NickNet/main.cc.o"
+  },{
+    "arguments": [
+      "/usr/bin/g++",
+      "-std=c++17",
+      "-Wall",
+      "-Wextra",
+      "-Wfatal-errors",
+      "-Wno-deprecated-declarations",
+      "-Wno-unused-parameter",
+      "-Wno-narrowing",
+      "-pthread",
+      "-I/root/tools/pocl/include",
+      "-I/root/tools/pocl/include/CL/opencl.h",
+      "-O2",
+      "-DNDEBUG",
+      "-c",
+      "-o",
+      "main.cc.o",
+      "/vortex/tests/opencl/NickNet/main.cc"
+    ],
+    "directory": "/vortex/build/tests/opencl/NickNet",
+    "file": "/vortex/tests/opencl/NickNet/Layer.hpp",
+    "output": "/vortex/build/tests/opencl/NickNet/main.cc.o"
+  },{
+    "arguments": [
+      "/usr/bin/g++",
+      "-std=c++17",
+      "-Wall",
+      "-Wextra",
+      "-Wfatal-errors",
+      "-Wno-deprecated-declarations",
+      "-Wno-unused-parameter",
+      "-Wno-narrowing",
+      "-pthread",
+      "-I/root/tools/pocl/include",
+      "-I/root/tools/pocl/include/CL/opencl.h",
+      "-O2",
+      "-DNDEBUG",
+      "-c",
+      "-o",
+      "main.cc.o",
+      "/vortex/tests/opencl/NickNet/main.cc"
+    ],
+    "directory": "/vortex/build/tests/opencl/NickNet",
+    "file": "/vortex/tests/opencl/NickNet/Network.hpp",
+    "output": "/vortex/build/tests/opencl/NickNet/main.cc.o"
   },
 ]

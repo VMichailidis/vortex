@@ -7,6 +7,7 @@
 #include <string.h>
 #include <time.h>
 #define TYPE float
+#include <CL/opencl.h>
 #define CL_CHECK(_expr)                                                                  \
     do {                                                                                 \
         cl_int _err = _expr;                                                             \
@@ -16,17 +17,25 @@
         exit(-1);                                                                        \
     } while (0)
 
-#define CL_CHECK2(_expr)                                                                 \
+// #define CL_CHECK2(_expr) \
+//     ({ \
+//         cl_int _err = CL_INVALID_VALUE; \
+//         decltype(_expr) _ret = _expr; \
+//         if (_err != CL_SUCCESS) { \
+//             printf("OpenCL Error: '%s' returned %d!\n", #_expr, (int)_err); \
+//             exit(-1); \
+//         } \
+//         _ret; \
+//     })
+#define CL_CHECK2(_err, _expr)                                                           \
     ({                                                                                   \
-        cl_int _err = CL_INVALID_VALUE;                                                  \
-        decltype(_expr) _ret = _expr;                                                    \
-        if (_err != CL_SUCCESS) {                                                        \
-            printf("OpenCL Error: '%s' returned %d!\n", #_expr, (int)_err);              \
+        decltype(_expr) _ret = (_expr);                                                  \
+        if ((_err) != CL_SUCCESS) {                                                      \
+            printf("OpenCL Error: '%s' returned %d!\n", #_expr, (int)(_err));            \
             exit(-1);                                                                    \
         }                                                                                \
         _ret;                                                                            \
     })
-
 static int read_kernel_file(const char *filename, uint8_t **data, size_t *size) {
     if (nullptr == filename || nullptr == data || 0 == size)
         return -1;
@@ -41,8 +50,9 @@ static int read_kernel_file(const char *filename, uint8_t **data, size_t *size) 
     long fsize = ftell(fp);
     rewind(fp);
 
-    *data = (uint8_t *)malloc(fsize);
+    *data = (uint8_t *)malloc(fsize+1);
     *size = fread(*data, 1, fsize, fp);
+    (*data)[*size] = '\0';
 
     fclose(fp);
 

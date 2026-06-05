@@ -7,10 +7,10 @@ SRC_DIR := $(VORTEX_HOME)/tests/opencl/$(PROJECT)
 
 SRCS := $(SRC_DIR)/main.cc
 
-conv1.cl: $(SRC_DIR)/conv1.cl
+kernel.cl: $(SRC_DIR)/kernel.cl
 	cp $< $@
 
-KERNEL_SRCS := conv1.cl
+KERNEL_SRCS := kernel.cl
 
 # OPTS ?= -n32
 
