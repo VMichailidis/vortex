@@ -64,9 +64,9 @@ template <typename T, unsigned N, unsigned C> class ReLU {
 
     void run() {
         if (1) {
-            CL_CHECK(clFinish(q));
             CL_CHECK(clEnqueueNDRangeKernel(q, kernel, 1, NULL, global_size, NULL, 0,
                                             NULL, NULL));
+            CL_CHECK(clFinish(q));
         }
         if (0) { // Write a known sentinel into port_out BEFORE the kernel runs
             std::vector<float> sentinel(i_points, 1234.5678f);

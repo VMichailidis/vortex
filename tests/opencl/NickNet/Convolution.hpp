@@ -41,7 +41,7 @@ template <typename T, uint32_t IN, uint32_t K, uint32_t C, uint32_t F> class Con
     Device *dev;
     const size_t global_size[2] = {F, OUT};
     const size_t local_size[2] = {1, 1};
-    Convolution(Device &dev_h, cl_mem input = NULL) {
+    Convolution(Device &dev_h, const char *kernel_name, cl_mem input = NULL) {
         i_nbytes = i_points * sizeof(TYPE);
         w_nbytes = w_points * sizeof(TYPE);
         b_nbytes = b_points * sizeof(TYPE);
@@ -66,7 +66,7 @@ template <typename T, uint32_t IN, uint32_t K, uint32_t C, uint32_t F> class Con
         dev_h.buffers.push_back(b_memobj);
 
         // Create kernel
-        kernel = CL_CHECK2(cl_err, clCreateKernel(dev_h.program, "conv1", &cl_err));
+        kernel = CL_CHECK2(cl_err, clCreateKernel(dev_h.program, kernel_name, &cl_err));
 
         CL_CHECK(clSetKernelArg(kernel, 0, sizeof(cl_mem), (void *)&port_in));
         CL_CHECK(clSetKernelArg(kernel, 1, sizeof(cl_mem), (void *)&w_memobj));
@@ -93,6 +93,7 @@ template <typename T, uint32_t IN, uint32_t K, uint32_t C, uint32_t F> class Con
             clEnqueueWriteBuffer(q, w_memobj, CL_TRUE, 0, w_nbytes, w, 0, NULL, NULL));
         CL_CHECK(
             clEnqueueWriteBuffer(q, b_memobj, CL_TRUE, 0, b_nbytes, b, 0, NULL, NULL));
+        CL_CHECK(clFinish(q));
     }
     void load_input(TYPE *i) {
         CL_CHECK(
@@ -105,16 +106,12 @@ template <typename T, uint32_t IN, uint32_t K, uint32_t C, uint32_t F> class Con
             clEnqueueReadBuffer(q, port_out, CL_TRUE, 0, o_nbytes, o, 0, NULL, NULL));
     }
 
-    void run() {
-        // char device_string[1024];
-        // clGetDeviceInfo(dev->device_id, CL_DEVICE_NAME, sizeof(device_string),
-        //                 &device_string, NULL);
-        // printf("Executing convolution layer using device: %s\n", device_string);
-        // printf("Executing kernel with OutLen: %d, Output buffer size: %d\n", OUT,
-        //        o_points);
-        CL_CHECK(
-            clEnqueueNDRangeKernel(q, kernel, 2, NULL, global_size, NULL, 0, NULL, NULL));
+    cl_event run(cl_event prereq = NULL) {
+        cl_event target;
         CL_CHECK(clFinish(q));
+        CL_CHECK(clEnqueueNDRangeKernel(q, kernel, 2, NULL, global_size, NULL, 0, &prereq,
+                                        &target));
+        return target;
     }
 };
 
