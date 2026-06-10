@@ -139,4 +139,5 @@ int main() {
     } else {
         printf("PASSED!\n");
     }
+    dev.print_info();
 }

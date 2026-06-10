@@ -31,6 +31,12 @@ class Network {
         c1 = new Convolution<T, OUT0, K1, C1, C2>(dev_h, "conv1_relu", c0->port_out);
         c2 = new Convolution<T, OUT1, K2, C2, F>(dev_h, "conv1", c1->port_out);
     }
+    ~Network() {
+        delete c2;
+        delete c1;
+        delete c0;
+    }
+
     void load_weights(TYPE **w, TYPE **b) {
         c0->load_weights(w[0], b[0]);
         c1->load_weights(w[1], b[1]);
@@ -40,12 +46,9 @@ class Network {
 
     void get_output(TYPE *o) { c2->get_output(o); }
     void run() {
-        cl_event layer0, layer1;
-        layer0 = c0->run();
-        layer1 = c1->run(layer0);
-        c2->run(layer1);
-        CL_CHECK(clReleaseEvent(layer0));
-        CL_CHECK(clReleaseEvent(layer1));
+        c0->run();
+        c1->run();
+        c2->run();
     }
 };
 

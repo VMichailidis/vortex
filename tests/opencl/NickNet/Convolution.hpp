@@ -39,9 +39,15 @@ template <typename T, uint32_t IN, uint32_t K, uint32_t C, uint32_t F> class Con
     cl_command_queue q;
 
     Device *dev;
-    const size_t global_size[2] = {F, OUT};
-    const size_t local_size[2] = {1, 1};
+    const size_t x_size = 1;
+    const size_t y_size = 64;
+    const size_t OUT_l = ((OUT / y_size) + (OUT % y_size > 0 ? 1 : 0)) * y_size;
+    const size_t global_size[2] = {F, OUT_l};
+    const size_t local_size[2] = {x_size, y_size};
     Convolution(Device &dev_h, const char *kernel_name, cl_mem input = NULL) {
+        // OPTIMIZATION LOG:
+        // No optimizations: cycles=682702
+        // Split into local work groups: cycles=202979
         i_nbytes = i_points * sizeof(TYPE);
         w_nbytes = w_points * sizeof(TYPE);
         b_nbytes = b_points * sizeof(TYPE);
@@ -93,7 +99,6 @@ template <typename T, uint32_t IN, uint32_t K, uint32_t C, uint32_t F> class Con
             clEnqueueWriteBuffer(q, w_memobj, CL_TRUE, 0, w_nbytes, w, 0, NULL, NULL));
         CL_CHECK(
             clEnqueueWriteBuffer(q, b_memobj, CL_TRUE, 0, b_nbytes, b, 0, NULL, NULL));
-        CL_CHECK(clFinish(q));
     }
     void load_input(TYPE *i) {
         CL_CHECK(
@@ -101,16 +106,16 @@ template <typename T, uint32_t IN, uint32_t K, uint32_t C, uint32_t F> class Con
     }
 
     void get_output(TYPE *o) {
-        CL_CHECK(clFinish(q));
         CL_CHECK(
             clEnqueueReadBuffer(q, port_out, CL_TRUE, 0, o_nbytes, o, 0, NULL, NULL));
     }
 
-    cl_event run(cl_event prereq = NULL) {
+    cl_event run() {
         cl_event target;
-        CL_CHECK(clFinish(q));
-        CL_CHECK(clEnqueueNDRangeKernel(q, kernel, 2, NULL, global_size, NULL, 0, &prereq,
-                                        &target));
+        printf("Running kernel with local work group size = {%u, %u}\n", local_size[0],
+               local_size[1]);
+        CL_CHECK(clEnqueueNDRangeKernel(q, kernel, 2, NULL, global_size, local_size, 0,
+                                        NULL, NULL));
         return target;
     }
 };
