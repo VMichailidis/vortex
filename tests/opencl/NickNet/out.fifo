@@ -1,0 +1,29 @@
+CONFIGS=-DNUM_CORES=1 -DNUM_THREADS=16 -DNUM_WARPS=4
+Running: CONFIGS="-DNUM_CORES=1 -DNUM_THREADS=16 -DNUM_WARPS=4" make -C /vortex/build/ci/../runtime/simx > /dev/null
+Running: make -C "/vortex/build/ci/../tests/opencl/NickNet" run-simx
+make: Entering directory '/vortex/build/tests/opencl/NickNet'
+LD_LIBRARY_PATH=/root/tools/pocl/lib:/vortex/build/runtime:/root/tools/llvm-vortex/lib: POCL_VORTEX_XLEN=32 LLVM_PREFIX=/root/tools/llvm-vortex POCL_VORTEX_BINTOOL="OBJCOPY=/root/tools/llvm-vortex/bin/llvm-objcopy /vortex/kernel/scripts/vxbin.py" POCL_VORTEX_CFLAGS="-march=rv32imaf -mabi=ilp32f -O3 -mcmodel=medany --sysroot=/root/tools/riscv32-gnu-toolchain/riscv32-unknown-elf --gcc-toolchain=/root/tools/riscv32-gnu-toolchain -fno-rtti -fno-exceptions -nostartfiles -nostdlib -fdata-sections -ffunction-sections -I/vortex/build/hw -I/vortex/kernel/include -DXLEN_32 -DNDEBUG  -Xclang -target-feature -Xclang +vortex -Xclang -target-feature -Xclang +zicond -mllvm -disable-loop-idiom-all	" POCL_VORTEX_LDFLAGS="-Wl,-Bstatic,--gc-sections,-T/vortex/kernel/scripts/link32.ld,--defsym=STARTUP_ADDR=0x80000000 /vortex/build/kernel/libvortex.a -L/root/tools/libc32/lib -lm -lc /root/tools/libcrt32/lib/baremetal/libclang_rt.builtins-riscv32.a" VORTEX_DRIVER=simx ./NickNet 
+Generating Weights
+Generating Weights
+Starting device
+Create context
+Create program from kernel source
+Initializing network
+Running Network on device
+Running network simulation
+PASSED!
+Device Info:	Max Compute Units: 1
+	Max Work Item Dimensions: 3
+	Max Mem Alloc Size: 0
+	Global Mem Size: 0
+	Max Constant Buffer Size: 0
+	Local Mem Size: 16384
+	Max Work Group Size: 64
+	Max Work Group Sizes: {64, 64, 64}
+Releasing kernel
+Releasing kernel
+Releasing kernel
+Releasing context
+Releasing device_id
+PERF: instrs=2302516, cycles=387909, IPC=5.935712
+make: Leaving directory '/vortex/build/tests/opencl/NickNet'
