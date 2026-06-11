@@ -1,4 +1,3 @@
 [keys.normal]
 space.m = [":w", ":run-shell-command docker exec -i vortex-container /vortex/build/ci/blackbox.sh --cores=1 --app=NickNet --threads=16 --warps=4 o+e>| save -f /home/basil/scratchpad/vortex-container/container/vortex/tests/opencl/NickNet/out.fifo"]
 space.M = ":run-shell-command kitty --override input_delay=500 --detach --hold nu -c \"watch /home/basil/scratchpad/vortex-container/container/vortex/tests/opencl/NickNet/out.fifo {clear; less /home/basil/scratchpad/vortex-container/container/vortex/tests/opencl/NickNet/out.fifo}\""
-space.5 = ":reload-all"

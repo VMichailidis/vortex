@@ -39,15 +39,19 @@ template <typename T, uint32_t IN, uint32_t K, uint32_t C, uint32_t F> class Con
     cl_command_queue q;
 
     Device *dev;
-    const size_t x_size = 1;
-    const size_t y_size = 64;
-    const size_t OUT_l = ((OUT / y_size) + (OUT % y_size > 0 ? 1 : 0)) * y_size;
-    const size_t global_size[2] = {F, OUT_l};
+    const size_t x_size = 4;
+    const size_t y_size = 16;
+    const size_t OUT_l = ((OUT + y_size - 1) / y_size) * y_size;
+    const size_t F_l = ((F + x_size - 1) / x_size) * x_size;
+    const size_t global_size[2] = {F_l, OUT_l};
     const size_t local_size[2] = {x_size, y_size};
+
     Convolution(Device &dev_h, const char *kernel_name, cl_mem input = NULL) {
         // OPTIMIZATION LOG:
         // No optimizations: cycles=682702
-        // Split into local work groups: cycles=202979
+        // Split into local work groups: cycles=387909
+        // temp cycles=877089 (allocation/)
+        // Move input to local memory
         i_nbytes = i_points * sizeof(TYPE);
         w_nbytes = w_points * sizeof(TYPE);
         b_nbytes = b_points * sizeof(TYPE);
@@ -78,6 +82,8 @@ template <typename T, uint32_t IN, uint32_t K, uint32_t C, uint32_t F> class Con
         CL_CHECK(clSetKernelArg(kernel, 1, sizeof(cl_mem), (void *)&w_memobj));
         CL_CHECK(clSetKernelArg(kernel, 2, sizeof(cl_mem), (void *)&b_memobj));
         CL_CHECK(clSetKernelArg(kernel, 3, sizeof(cl_mem), (void *)&port_out));
+
+        // CL_CHECK(clSetKernelArg(kernel, 4, C * (y_size + K) * sizeof(T), NULL));
 
         CL_CHECK(clSetKernelArg(kernel, 4, sizeof(uint32_t), &in));
         CL_CHECK(clSetKernelArg(kernel, 5, sizeof(uint32_t), &k));
@@ -112,8 +118,15 @@ template <typename T, uint32_t IN, uint32_t K, uint32_t C, uint32_t F> class Con
 
     cl_event run() {
         cl_event target;
-        printf("Running kernel with local work group size = {%u, %u}\n", local_size[0],
-               local_size[1]);
+        size_t max_size = dev->max_work_group_sizes();
+        if (local_size[0] * local_size[1] > max_size) {
+            printf("\033[31mError:\033[0m Requested work group size (%d) is greater than "
+                   "maximum work "
+                   "group "
+                   "size (%d)\n",
+                   local_size[0] * local_size[1], max_size);
+            exit(-1);
+        }
         CL_CHECK(clEnqueueNDRangeKernel(q, kernel, 2, NULL, global_size, local_size, 0,
                                         NULL, NULL));
         return target;

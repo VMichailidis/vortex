@@ -24,9 +24,9 @@
 #define _K0 5
 #define _K1 5
 #define _K2 5
-#define _C0 5
-#define _C1 5
-#define _C2 5
+#define _C0 6
+#define _C1 6
+#define _C2 6
 #define _OUT0 (_IN - _K0 + 1)
 #define _OUT1 (_OUT0 - _K1 + 1)
 #define _OUT2 (_OUT1 - _K2 + 1)
@@ -135,9 +135,9 @@ int main() {
         }
     }
     if (errors != 0) {
-        printf("FAILED! - %d errors\n", errors);
+        printf("\033[31m[FAILED! - %d errors\033[0m\n", errors);
     } else {
-        printf("PASSED!\n");
+        printf("\033[32mPASSED!\033[0m\n");
     }
     dev.print_info();
 }
