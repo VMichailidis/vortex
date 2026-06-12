@@ -48,9 +48,6 @@ template <typename T, uint32_t IN, uint32_t K, uint32_t C, uint32_t F> class Con
 
     Convolution(Device &dev_h, const char *kernel_name, cl_mem input = NULL) {
         // OPTIMIZATION LOG:
-        // No optimizations: cycles=682702
-        // Split into local work groups: cycles=387909
-        // temp cycles=877089 (allocation/)
         // Move input to local memory
         i_nbytes = i_points * sizeof(TYPE);
         w_nbytes = w_points * sizeof(TYPE);
