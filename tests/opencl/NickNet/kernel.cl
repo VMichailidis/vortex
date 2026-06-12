@@ -62,14 +62,14 @@ __kernel void conv1(__global TYPE *I, // [Num Channels, Seq Length]
                     __global TYPE *W, // [Num Filters, Num Channels, K]
                     __global TYPE *B, // [Num Filters]
                     __global TYPE *O, // [Num Filters, Out Len]
-                    __local TYPE *L,  // [Num Channels, local size + K
+                    // __local TYPE *L,  // [Num Channels, local size + K
                     const int IN, const int K, const int C, const int F) {
     int f = get_global_id(0); // filter
     int t = get_global_id(1); // timestamp
 
     int OUT = (IN - K) + 1;
-    TYPE result = conv(I, W, B, O, IN, K, C, F, L, f, t);
-    // TYPE result = conv_no_cache(I, W, B, O, IN, K, C, F, f, t);
+    // TYPE result = conv(I, W, B, O, IN, K, C, F, L, f, t);
+    TYPE result = conv_no_cache(I, W, B, O, IN, K, C, F, f, t);
     if (f >= F || t >= OUT)
         return;
     O[f * OUT + t] = result;
@@ -78,13 +78,13 @@ __kernel void conv1_relu(__global TYPE *I, // [Num Channels, Seq Length]
                          __global TYPE *W, // [Num Filters, Num Channels, K]
                          __global TYPE *B, // [Num Filters]
                          __global TYPE *O, // [Num Filters, Out Len]
-                         __local TYPE *L,  // [Num Channels, local size + K
+                         // __local TYPE *L,  // [Num Channels, local size + K
                          const int IN, const int K, const int C, const int F) {
     int f = get_global_id(0); // filter
     int t = get_global_id(1); // timestamp
     int OUT = (IN - K) + 1;
-    TYPE result = conv(I, W, B, O, IN, K, C, F, L, f, t);
-    // TYPE result = conv_no_cache(I, W, B, O, IN, K, C, F, f, t);
+    // TYPE result = conv(I, W, B, O, IN, K, C, F, L, f, t);
+    TYPE result = conv_no_cache(I, W, B, O, IN, K, C, F, f, t);
     if (f >= F || t >= OUT)
         return;
     O[f * OUT + t] = result > 0.0f ? result : 0.0f;
