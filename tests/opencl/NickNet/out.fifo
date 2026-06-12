@@ -2,7 +2,6 @@ CONFIGS=-DNUM_CORES=1 -DNUM_THREADS=16 -DNUM_WARPS=4 -DL2_ENABLE -DL3_ENABLE
 Running: CONFIGS="-DNUM_CORES=1 -DNUM_THREADS=16 -DNUM_WARPS=4 -DL2_ENABLE -DL3_ENABLE" make -C /vortex/build/ci/../runtime/simx > /dev/null
 Running: make -C "/vortex/build/ci/../tests/opencl/NickNet" run-simx
 make: Entering directory '/vortex/build/tests/opencl/NickNet'
-cp /vortex/tests/opencl/NickNet/kernel.cl kernel.cl
 g++ -fdiagnostics-color=always -std=c++17 -Wall -Wextra -Wfatal-errors -Wno-deprecated-declarations -Wno-unused-parameter -Wno-narrowing -pthread -I/root/tools/pocl/include  -O2 -DNDEBUG -c /vortex/tests/opencl/NickNet/main.cc -o main.cc.o
 In file included from [01m[K/root/tools/pocl/include/CL/cl.h:20[m[K,
                  from [01m[K/vortex/tests/opencl/NickNet/main.cc:1[m[K:
@@ -116,5 +115,5 @@ Releasing kernel
 Releasing kernel
 Releasing context
 Releasing device_id
-PERF: instrs=2701234, cycles=432493, IPC=6.245729
+PERF: instrs=2701234, cycles=410829, IPC=6.575081
 make: Leaving directory '/vortex/build/tests/opencl/NickNet'

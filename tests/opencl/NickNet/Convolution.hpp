@@ -39,8 +39,8 @@ template <typename T, uint32_t IN, uint32_t K, uint32_t C, uint32_t F> class Con
     cl_command_queue q;
 
     Device *dev;
-    const size_t x_size = 4;
-    const size_t y_size = 16;
+    const size_t x_size = 1;
+    const size_t y_size = 64;
     const size_t OUT_l = ((OUT + y_size - 1) / y_size) * y_size;
     const size_t F_l = ((F + x_size - 1) / x_size) * x_size;
     const size_t global_size[2] = {F_l, OUT_l};
