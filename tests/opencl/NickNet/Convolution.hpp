@@ -39,8 +39,8 @@ template <typename T, uint32_t IN, uint32_t K, uint32_t C, uint32_t F> class Con
     cl_command_queue q;
 
     Device *dev;
-    const size_t x_size = 2;
-    const size_t y_size = 32;
+    const size_t x_size = 4;
+    const size_t y_size = 16;
     const size_t OUT_l = ((OUT + y_size - 1) / y_size) * y_size;
     const size_t F_l = ((F + x_size - 1) / x_size) * x_size;
     const size_t global_size[2] = {F_l, OUT_l};
@@ -50,8 +50,8 @@ template <typename T, uint32_t IN, uint32_t K, uint32_t C, uint32_t F> class Con
         // OPTIMIZATION LOG:
         // No optimizations: cycles=682702
         // Split into local work groups: cycles=387909
-        // Move input to local memory cycles=1360311
-        // Move Weights to local memory 676219
+        // temp cycles=877089 (allocation/)
+        // Move input to local memory
         i_nbytes = i_points * sizeof(TYPE);
         w_nbytes = w_points * sizeof(TYPE);
         b_nbytes = b_points * sizeof(TYPE);
@@ -83,7 +83,7 @@ template <typename T, uint32_t IN, uint32_t K, uint32_t C, uint32_t F> class Con
         CL_CHECK(clSetKernelArg(kernel, 2, sizeof(cl_mem), (void *)&b_memobj));
         CL_CHECK(clSetKernelArg(kernel, 3, sizeof(cl_mem), (void *)&port_out));
 
-        CL_CHECK(clSetKernelArg(kernel, 4, x_size * (C * K) * sizeof(T), NULL));
+        CL_CHECK(clSetKernelArg(kernel, 4, C * (y_size + K) * sizeof(T), NULL));
 
         CL_CHECK(clSetKernelArg(kernel, 5, sizeof(uint32_t), &in));
         CL_CHECK(clSetKernelArg(kernel, 6, sizeof(uint32_t), &k));
