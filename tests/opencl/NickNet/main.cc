@@ -135,7 +135,7 @@ int main() {
         }
     }
     if (errors != 0) {
-        printf("\033[31m[FAILED! - %d errors\033[0m\n", errors);
+        printf("\033[31mFAILED! - %d errors\033[0m\n", errors);
     } else {
         printf("\033[32mPASSED!\033[0m\n");
     }
