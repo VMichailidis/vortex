@@ -4,6 +4,7 @@
 #include "Network.hpp"
 #include "ReLU.hpp"
 #include "common.h"
+#include "sparse_array.h"
 #include <assert.h>
 // #include <ios>
 #include <cstddef>
@@ -44,7 +45,6 @@ static bool compare_equal(float a, float b) {
 }
 
 template <uint32_t L> static TYPE **gen_weights(uint32_t *W) {
-    printf("Generating Weights\n");
     TYPE **out = (float **)std::malloc(L * sizeof(TYPE *));
     auto rand_float = []() { return (static_cast<float>(rand()) / RAND_MAX) - 0.5f; };
     for (uint32_t l = 0; l < L; l++) {
@@ -95,49 +95,115 @@ static void nick_net_cpu(T *I, T **W, T **B, T *O) {
     std::free(O0);
     std::free(O1);
 }
-
-int main() {
-    uint32_t weight_dims[3] = {_K0 * _C1 * _C0, _K1 * _C2 * _C1, _K2 * _F * _C2};
-    TYPE **h_W = gen_weights<3>(weight_dims);
-    uint32_t bias_dims[3] = {_C1, _C2, _F};
-    TYPE **h_B = gen_weights<3>(bias_dims);
-
-    std::vector<TYPE> h_i(_IN * _C0);
-    std::vector<TYPE> h_o(_OUT2 * _F, 0.0f);
-    std::vector<TYPE> ref_vec(_OUT2 * _F, 0.0f);
-    // Generate input values
-    auto rand_float = []() { return (static_cast<float>(rand()) / RAND_MAX) - 0.5f; };
-    for (int32_t i = 0; i < _IN * _C0; i++) {
-        h_i[i] = rand_float();
+void generate_sparse_input(std::vector<TYPE> *I) {
+    for (size_t i = 0; i < I->size(); i++) {
     }
-    printf("Starting device\n");
-    Device dev;
+}
+void print_arr(TYPE arr[], int N, int C) {
+    printf("{ \n");
+    for (int n = 0; n < N; n++) {
+        for (int c = 0; c < C; c++) {
+            printf("%.1f, ", arr[n * C + c]);
+        }
+        printf("\n");
+    }
+    printf("}\n");
+}
 
-    printf("Initializing network\n");
-    Network<TYPE, _IN, _K0, _C0, _K1, _C1, _K2, _C2, _F> Net(dev);
-
-    printf("Running Network on device\n");
-    Net.load_weights(h_W, h_B);
-    Net.load_input(h_i.data());
-    Net.run();
-    Net.get_output(h_o.data());
-
-    printf("Running network simulation\n");
-    nick_net_cpu<TYPE, _IN, _K0, _C0, _K1, _C1, _K2, _C2, _F>(h_i.data(), h_W, h_B,
-                                                              ref_vec.data());
-
-    int errors = 0;
-    for (uint32_t i = 0; i < _OUT2 * _F; ++i) {
-        if (!compare_equal(h_o[i], ref_vec[i])) {
-            if (errors < 100)
-                printf("*** error: [%d] expected=%f, actual=%f\n", i, ref_vec[i], h_o[i]);
-            ++errors;
+void print_arr(TYPE arr[], int N) {
+    printf("{");
+    for (int n = 0; n < N; n++) {
+        printf("%.1f, ", arr[n]);
+    }
+    printf("\b\b}\n");
+}
+template <typename T> void print_arr(T arr[], int N) {
+    printf("{ ");
+    for (int n = 0; n < N; n++) {
+        printf("%d, ", arr[n]);
+    }
+    printf("\b\b}\n");
+}
+int main() {
+    unsigned N = 10;
+    unsigned C = 3;
+    TYPE arr[30], arr_p[30];
+    for (int n = 0; n < N; n++) {
+        for (int c = 0; c < C; c++) {
+            arr[n * C + c] = rand() % 2 ? n * 10 + c : 0;
         }
     }
-    if (errors != 0) {
-        printf("\033[31mFAILED! - %d errors\033[0m\n", errors);
-    } else {
-        printf("\033[32mPASSED!\033[0m\n");
+    print_arr(arr, N, C);
+    Sparse_array *test = compress(arr, N, C);
+    printf("Size: %d, Samples: %d\n", test->size, test->samples);
+    print_arr(test->val, test->size);
+    print_arr(test->idx, test->samples);
+    print_arr(test->mask, test->samples);
+    // accumulate_indexes(test);
+    decompress(arr_p, N, C, test);
+    print_arr(arr_p, N, C);
+    free_Sparse(test);
+    bool err = false;
+    for (unsigned i = 0; i < N * C; i++) {
+        if (arr[i] != arr_p[i]) {
+            printf("\033[31mERROR!\033[0m: %f != %f\n", arr[i], arr_p[i]);
+            err = true;
+        }
     }
-    dev.print_info();
+    if (err) {
+        printf("Error!!\n");
+    } else {
+        printf("PASSED!\n");
+    }
+
+    // print_arr(test->ptx, N * C);
+
+    if (false) {
+        uint32_t weight_dims[3] = {_K0 * _C1 * _C0, _K1 * _C2 * _C1, _K2 * _F * _C2};
+        TYPE **h_W = gen_weights<3>(weight_dims);
+        uint32_t bias_dims[3] = {_C1, _C2, _F};
+        TYPE **h_B = gen_weights<3>(bias_dims);
+
+        std::vector<TYPE> h_i(_IN / 2 * _C0);
+        std::vector<int> h_ii(_IN / 2 * _C0);
+        std::vector<TYPE> h_o(_OUT2 * _F, 0.0f);
+        std::vector<TYPE> ref_vec(_OUT2 * _F, 0.0f);
+        // Generate input values
+        auto rand_float = []() { return (static_cast<float>(rand()) / RAND_MAX) - 0.5f; };
+        for (int32_t i = 0; i < _IN * _C0; i++) {
+            h_i[i] = rand_float();
+        }
+        generate_sparse_input(&h_i);
+        printf("Starting device\n");
+        Device dev;
+
+        printf("Initializing network\n");
+        Network<TYPE, _IN, _K0, _C0, _K1, _C1, _K2, _C2, _F> Net(dev);
+
+        printf("Running Network on device\n");
+        Net.load_weights(h_W, h_B);
+        Net.load_input(h_i.data());
+        Net.run();
+        Net.get_output(h_o.data());
+
+        printf("Running network simulation\n");
+        nick_net_cpu<TYPE, _IN, _K0, _C0, _K1, _C1, _K2, _C2, _F>(h_i.data(), h_W, h_B,
+                                                                  ref_vec.data());
+
+        int errors = 0;
+        for (uint32_t i = 0; i < _OUT2 * _F; ++i) {
+            if (!compare_equal(h_o[i], ref_vec[i])) {
+                if (errors < 100)
+                    printf("*** error: [%d] expected=%f, actual=%f\n", i, ref_vec[i],
+                           h_o[i]);
+                ++errors;
+            }
+        }
+        if (errors != 0) {
+            printf("\033[31mFAILED! - %d errors\033[0m\n", errors);
+        } else {
+            printf("\033[32mPASSED!\033[0m\n");
+        }
+        dev.print_info();
+    }
 }
