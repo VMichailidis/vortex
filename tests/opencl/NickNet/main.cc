@@ -4,7 +4,7 @@
 #include "Network.hpp"
 #include "ReLU.hpp"
 #include "common.h"
-#include "sparse_array.h"
+#include "sparse_block.h"
 #include <assert.h>
 // #include <ios>
 #include <cstddef>
@@ -134,26 +134,25 @@ int main() {
         }
     }
     print_arr(arr, N, C);
-    Sparse_array *test = compress(arr, N, C);
-    printf("Size: %d, Samples: %d\n", test->size, test->samples);
-    print_arr(test->val, test->size);
-    print_arr(test->idx, test->samples);
-    print_arr(test->mask, test->samples);
+    Sparse_block *test = compress(arr, N, C);
+    printf("Size: %d, Samples: %d\n", test->size, test->len);
+    print_arr(test->data, test->size);
+    print_arr(test->samples, test->len);
+    print_arr(test->mask, test->len);
     // accumulate_indexes(test);
     decompress(arr_p, N, C, test);
     print_arr(arr_p, N, C);
     free_Sparse(test);
     bool err = false;
+
     for (unsigned i = 0; i < N * C; i++) {
         if (arr[i] != arr_p[i]) {
             printf("\033[31mERROR!\033[0m: %f != %f\n", arr[i], arr_p[i]);
             err = true;
         }
     }
-    if (err) {
-        printf("Error!!\n");
-    } else {
-        printf("PASSED!\n");
+    if (!err) {
+        printf("\033[32mPASSED\033[0m\n");
     }
 
     // print_arr(test->ptx, N * C);
