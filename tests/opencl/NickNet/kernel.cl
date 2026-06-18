@@ -1,4 +1,3 @@
-#include <opencl-c-base.h>
 #ifndef TYPE
 #define TYPE float
 #endif
@@ -8,8 +7,16 @@
 #ifndef LS1
 #define LS1 32
 #endif
-#define __IS_KERNEL
-#include "sparse_block.h"
+#define SPARSE_LEN 64
+typedef struct Sparse_block {
+    unsigned C;
+    unsigned char len;
+    unsigned short size;
+    unsigned samples[SPARSE_LEN];
+    unsigned char mask[SPARSE_LEN];
+    unsigned ptx[SPARSE_LEN];
+    TYPE data[]; // Dynamically allocate val buffer based on channel count and samples
+} Sparse_block;
 
 typedef enum rob_status { FREE, PENDING, FINISHED } rob_status;
 
@@ -55,15 +62,16 @@ TYPE conv(__global TYPE *W, __global TYPE *B, const int K, __global Sparse_block
     unsigned char sample = tr;
     TYPE acc = B[f];
 
-    while (src->samples[sample] < src->samples[sample] + K) {
+    while (sample < src->len - K + 1 && src->samples[sample] < (tr + K)) {
         unsigned char mask = src->mask[sample];
         unsigned char channel = __builtin_ffs(mask);
-        while (channel) {
+        while (mask) {
             unsigned char c = channel - 1;
             unsigned offset = __builtin_popcount(~(~0 << c) & src->mask[sample]);
+            unsigned char k_pos = src->samples[sample] - tr;
 
-            acc += W[f * src->C * K + c * K + src->samples[sample]] *
-                   src->data[src->ptx[sample] + offset];
+            acc +=
+                W[f * src->C * K + c * K + k_pos] * src->data[src->ptx[sample] + offset];
 
             mask >>= channel;
             channel = __builtin_ffs(mask);
@@ -81,26 +89,27 @@ TYPE conv(__global TYPE *W, __global TYPE *B, const int K, __global Sparse_block
 void gen_mask(__global Sparse_block *block) {
     int f = get_global_id(0);
     int id = get_global_id(1);
-    if (f != 0 || id >= block->len)
-        return;
-    unsigned char m = 0;
-    unsigned char pos = id * block->C;
-    for (unsigned c = 0; c < block->C; c++) {
-        if (block->data[pos + c] != 0)
-            m |= 1 << c;
+    if (f == 0 && id < block->len) {
+        unsigned char m = 0;
+        unsigned pos = id * block->C;
+        for (unsigned c = 0; c < block->C; c++)
+            if (block->data[pos + c] != 0)
+                m |= 1 << c;
+
+        block->mask[id] = m;
     }
-    block->mask[id] = m;
+    return;
 }
 //
-// gets the output of gen_mask and packs each element to the left hand side of its address
-// subspace [c0, 0, c2] -> [c0, c2, c2]
+// gets the output of gen_mask and packs each element to the left hand side of its
+// address subspace [c0, 0, c2] -> [c0, c2, c2]
 void pack_samples(__global Sparse_block *block) {
     int f = get_global_id(0);
     int id = get_global_id(1);
     if (f != 0 || id >= block->len)
         return;
     unsigned char m = block->mask[id];
-    unsigned char pos = id * block->C;
+    unsigned pos = id * block->C;
     for (unsigned c = 0; c < block->C; c++) {
         unsigned char offset = __builtin_popcount(~(~0 << c) & m);
         block->data[pos + offset] = block->data[pos + c];
@@ -128,10 +137,10 @@ void concat(__global Sparse_block *block, __global unsigned char *blocks,
     int group = (2 * id) / (1 << N); // each group contains 2^N / 2 work items
     int group_size = (1 << (N - 1));
     int item = id - group * group_size;
-    int group_offset_l = group << N;                    // offset of left block
-    int group_offset_r = group_offset_l + 1 << (N - 1); // offset of right block
-    int len_l = blocks[group_offset_l];                 // packed length of left block
-    int len_r = blocks[group_offset_r];                 // packed length of right block
+    int group_offset_l = group << N;                      // offset of left block
+    int group_offset_r = group_offset_l + (1 << (N - 1)); // offset of right block
+    int len_l = blocks[group_offset_l];                   // packed length of left block
+    int len_r = blocks[group_offset_r];                   // packed length of right block
     int len_new = len_l + len_r;
     int size_l = data_blocks[group_offset_l]; // packed size of left block
     int size_r = data_blocks[group_offset_r]; // packed size of right block
@@ -150,7 +159,7 @@ void concat(__global Sparse_block *block, __global unsigned char *blocks,
         block->ptx[group_offset_l + len_l + item] =
             block->ptx[group_offset_r + item] - shift_delta;
     }
-    for (int i = 0; i + item < size_r; i *= group_size) {
+    for (int i = 0; i + item < size_r; i += group_size) {
         block->data[group_offset_l + size_l + i + item] =
             block->data[group_offset_r + i + item];
     }
@@ -176,101 +185,40 @@ void compress(__global Sparse_block *block, __global unsigned char *blocks,
     }
 }
 
-__kernel void conv_relu(__global TYPE *W, __global TYPE *B, const int K,
+__kernel void conv_relu(__global TYPE *W, __global TYPE *B, const int K, const unsigned F,
                         __global Sparse_block *src, __global Sparse_block *dst,
                         // helper buffers of size SPARSE_LEN
                         __global unsigned char *blocks,
                         __global unsigned char *data_blocks) {
     unsigned char f = get_global_id(0);
     unsigned char tr = get_global_id(1);
+    if (f == 0 && tr == 0)
+        printf("Starting Convolution with %d threads\n", src->len - K + 1);
     if (tr < src->len - K + 1) {
         TYPE result = conv(W, B, K, src);
         result = result < 0 ? 0.0f : result;
-        dst->data[tr * dst->C + f] = result;
+        dst->data[tr * F + f] = result;
         if (f == 0) {
-            dst->ptx[tr] = tr * dst->C;
+            dst->ptx[tr] = tr * F;
             dst->samples[tr] = src->samples[tr];
         }
-        // ASSUME THAT DST->C and DST->K are initialized at the reorder buffer
-        if (f == 0 && tr == 0) {
-            dst->len = src->len - K + 1;
-        }
+    }
+    if (f == 0 && tr == 0) {
+        dst->len = src->len - K + 1;
+        dst->C = F;
+        printf("Generating Masks\n");
     }
     barrier(CLK_GLOBAL_MEM_FENCE);
     gen_mask(dst);
+
+    if (f == 0 && tr == 0)
+        printf("Packing Output");
     barrier(CLK_GLOBAL_MEM_FENCE);
+
     pack_samples(dst);
+    if (f == 0 && tr == 0)
+        printf("Compressing Output");
     barrier(CLK_GLOBAL_MEM_FENCE);
     compress(dst, blocks, data_blocks);
     barrier(CLK_GLOBAL_MEM_FENCE);
 }
-// TYPE conv_no_cache(__global TYPE *I, // [Num Channels, Seq Length]
-//                    __global TYPE *W, // [Num Filters, Num Channels, K]
-//                    __global TYPE *B, // [Num Filters]
-//                    __global TYPE *O, // [Num Filters, Out Len]
-//                    const int IN, const int K, const int C, const int F, int f, int
-//                    t) {
-
-//     TYPE acc = B[f];
-//     for (int c = 0; c < C; c++) {
-//         for (int k = 0; k < K; k++) {
-//             acc += I[c * IN + t + k] * W[f * C * K + c * K + k];
-//         }
-//     }
-//     return acc;
-// }
-// __kernel void conv1_sparse(__global TYPE *I, //[IN, C]
-//                            __global int *II, //[IN]
-//                            __global TYPE *W, //[F, C, K]
-//                            __global TYPE *B, //[F]
-//                            __global TYPE *O, //[OUT, F]
-//                            __global int *OO, //[OUT]
-//                            const int IN, const int K, const int C, const int F) {
-//     int f = get_global_id(0);
-//     int t = get_global_id(1);
-//     int gt = get_global_size(1);
-
-//     // OUT = IN - K + 1, iterations = (OUT + gt - 1) / gt
-//     for (int i = 0; i < (IN - K + gt) / gt; i++) {
-//         TYPE acc = B[f];
-//         int id = i * gt + t;
-//         int ii = id;
-//         int root = II[id];
-//         do {
-//             for (int c = 0; c < C; c++) {
-//                 acc += W[f * C * K + c * K + root - II[ii]];
-//             }
-//             ii++;
-//         } while (II[ii] < root + K);
-//         O[id * F + f] = acc;
-//     }
-// }
-// __kernel void conv1(__global TYPE *I, // [Num Channels, Seq Length]
-//                     __global TYPE *W, // [Num Filters, Num Channels, K]
-//                     __global TYPE *B, // [Num Filters]
-//                     __global TYPE *O, // [Num Filters, Out Len]
-//                     // __local TYPE *L,  // [Num Channels, local size + K
-//                     const int IN, const int K, const int C, const int F) {
-//     int f = get_global_id(0); // filter
-//     int t = get_global_id(1); // timestamp
-
-//     int OUT = (IN - K) + 1;
-//     TYPE result = conv_no_cache(I, W, B, O, IN, K, C, F, f, t);
-//     if (f >= F || t >= OUT)
-//         return;
-//     O[f * OUT + t] = result;
-// }
-// __kernel void conv1_relu(__global TYPE *I, // [Num Channels, Seq Length]
-//                          __global TYPE *W, // [Num Filters, Num Channels, K]
-//                          __global TYPE *B, // [Num Filters]
-//                          __global TYPE *O, // [Num Filters, Out Len]
-//                          // __local TYPE *L,  // [Num Channels, local size + K
-//                          const int IN, const int K, const int C, const int F) {
-//     int f = get_global_id(0); // filter
-//     int t = get_global_id(1); // timestamp
-//     int OUT = (IN - K) + 1;
-//     TYPE result = conv_no_cache(I, W, B, O, IN, K, C, F, f, t);
-//     if (f >= F || t >= OUT)
-//         return;
-//     O[f * OUT + t] = result > 0.0f ? result : 0.0f;
-// }

@@ -1,6 +1,7 @@
-#ifndef _SPARSE_ARRAY
-#define _SPARSE_ARRAY
+#ifndef _SPARSE_BLOCK
+#define _SPARSE_BLOCK
 #include <bits/floatn-common.h>
+#include <cstdint>
 #ifndef TYPE
 #define TYPE float
 #endif
@@ -9,22 +10,11 @@
 #endif
 
 typedef struct Sparse_block {
-    // Number of channels
     unsigned C;
-    // Length of idx/mask/ptx arrays.
     unsigned char len;
-    // Length of val
     unsigned short size;
-
-    struct Sparse_block *next;
-    struct Sparse_block *prev;
-
-    // array of the equivalent sparse index of the n-th element of val
     unsigned samples[SPARSE_LEN];
-    // array of masks indicating the occupancy of each channel of element samples[ptx[i]]
-    // Example: [ch0,ch2] -> 101, [ch1,ch2] -> 110
     unsigned char mask[SPARSE_LEN];
-    // array of pointers to val
     unsigned ptx[SPARSE_LEN];
     TYPE data[]; // Dynamically allocate val buffer based on channel count and samples
 } Sparse_block;
@@ -32,23 +22,6 @@ typedef struct Sparse_block {
 #ifndef __IS_KERNEL
 #include <cstdio>
 #include <cstdlib>
-// TYPE get(unsigned n, unsigned c, Sparse_block *block) {
-//     while (n > block->last) {
-//         block = block->next;
-//     }
-//     int i = 0;
-//     unsigned n_p;
-//     for (n_p = block->idx[i]; n_p <= n; n_p = block->idx[i++])
-//         ;
-//     if (n_p == n && (block->mask[i] & 1 << c)) {
-//         unsigned offset = __builtin_popcount(
-//             ~(~0 << c) & block->mask[i]); // find the position of channel c in val
-
-//         return block->val[n_p + offset];
-//     } else {
-//         return NAN;
-//     }
-// }
 
 void free_Sparse(Sparse_block *arr) { free(arr); }
 

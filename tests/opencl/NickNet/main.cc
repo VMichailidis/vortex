@@ -3,6 +3,7 @@
 #include "Device.hpp"
 #include "Network.hpp"
 #include "ReLU.hpp"
+#include "SparseConv.hpp"
 #include "common.h"
 #include "sparse_block.h"
 #include <assert.h>
@@ -18,9 +19,9 @@
 
 #define KERNEL_NAME "conv1"
 #define _IN 1024
-// #define _K 5
-// #define _C 2
-// #define _OUT (_IN - _K + 1)
+#define _K 5
+#define _C 2
+#define _OUT (_IN - _K + 1)
 #define _F 8
 #define _K0 5
 #define _K1 5
@@ -125,37 +126,53 @@ template <typename T> void print_arr(T arr[], int N) {
     printf("\b\b}\n");
 }
 int main() {
-    unsigned N = 10;
-    unsigned C = 3;
-    TYPE arr[30], arr_p[30];
+    const unsigned N = 64;
+    uint32_t weights[1] = {_K * _F * _C};
+    uint32_t bias[1] = {_F};
+    TYPE h_in[N * _C], h_out[(N + _K - 1) * _F], dev_out[(N + _K - 1) * _F];
+
     for (int n = 0; n < N; n++) {
-        for (int c = 0; c < C; c++) {
-            arr[n * C + c] = rand() % 2 ? n * 10 + c : 0;
+        for (int c = 0; c < _C; c++) {
+            h_in[n * _C + c] = rand() % 2 ? n * 10 + c : 0;
         }
     }
-    print_arr(arr, N, C);
-    Sparse_block *test = compress(arr, N, C);
-    printf("Size: %d, Samples: %d\n", test->size, test->len);
-    print_arr(test->data, test->size);
-    print_arr(test->samples, test->len);
-    print_arr(test->mask, test->len);
-    // accumulate_indexes(test);
-    decompress(arr_p, N, C, test);
-    print_arr(arr_p, N, C);
-    free_Sparse(test);
-    bool err = false;
+    Sparse_block *input = compress(h_in, N, _C);
+    Sparse_block *output =
+        (Sparse_block *)malloc(sizeof(Sparse_block) + sizeof(TYPE) * input->len * _F);
+    output->C = _F;
+    TYPE *h_W = gen_weights<1>(weights)[0];
+    TYPE *h_B = gen_weights<1>(bias)[0];
+    convolution_cpu<TYPE, N, _K, _C, _F>(h_in, h_W, h_B, h_out);
+    relu_cpu<N>(h_out);
 
-    for (unsigned i = 0; i < N * C; i++) {
-        if (arr[i] != arr_p[i]) {
-            printf("\033[31mERROR!\033[0m: %f != %f\n", arr[i], arr_p[i]);
-            err = true;
+    printf("\033[33mStarting Device\033[0m\n");
+    Device dev;
+    printf("\033[33mInitializing Network\033[0m\n");
+    SparseConvolution<TYPE, N, _K, _C, _F> L0(dev, "conv_relu");
+    L0.load_weights(h_W, h_B);
+    printf("\033[33mRunning Network on device\033[0m\n");
+    L0.load_input(input);
+    L0.run();
+    L0.get_output(output);
+    printf("\033[33mTesting Network\033[0m\n");
+    unsigned len_tmp, f_tmp;
+    decompress(dev_out, len_tmp, f_tmp, output);
+    int errors = 0;
+    for (uint32_t i = 0; i < (N + _K - 1); ++i) {
+        if (!compare_equal(dev_out[i], h_out[i])) {
+            if (errors < 100)
+                printf("*** \033[31merror\033[0m: [%d] expected=%f, actual=%f\n", i,
+                       h_out[i], dev_out[i]);
+            ++errors;
         }
     }
-    if (!err) {
-        printf("\033[32mPASSED\033[0m\n");
+    if (errors != 0) {
+        printf("\033[31mFAILED! - %d errors\033[0m\n", errors);
+    } else {
+        printf("\033[32mPASSED!\033[0m\n");
     }
 
-    // print_arr(test->ptx, N * C);
+    free_Sparse(input);
 
     if (false) {
         uint32_t weight_dims[3] = {_K0 * _C1 * _C0, _K1 * _C2 * _C1, _K2 * _F * _C2};
