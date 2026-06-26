@@ -1,3 +1,5 @@
+// #include <cstdio>
+// #include <opencl-c-base.h>
 #ifndef TYPE
 #define TYPE float
 #endif
@@ -122,7 +124,7 @@ void pack_samples(__global Sparse_block *block) {
 void concat(__global Sparse_block *block, __global unsigned char *blocks,
             __global unsigned char *data_blocks, int N) {
     int id = get_global_id(1) * get_global_size(0) + get_global_id(0);
-    if (id > block->len)
+    if (id >= block->len)
         return;
     if (N == 0) {
         int pop = __builtin_popcount(block->mask[id]);
@@ -210,14 +212,16 @@ __kernel void conv_relu(__global TYPE *W, __global TYPE *B, const int K, const u
     }
     barrier(CLK_GLOBAL_MEM_FENCE);
     gen_mask(dst);
+    barrier(CLK_GLOBAL_MEM_FENCE);
 
-    if (f == 0 && tr == 0)
-        printf("Packing Output");
+    if (f == 0 && tr == 0) {
+        printf("Packing Output\n");
+    }
     barrier(CLK_GLOBAL_MEM_FENCE);
 
     pack_samples(dst);
     if (f == 0 && tr == 0)
-        printf("Compressing Output");
+        printf("Compressing Output\n");
     barrier(CLK_GLOBAL_MEM_FENCE);
     compress(dst, blocks, data_blocks);
     barrier(CLK_GLOBAL_MEM_FENCE);
