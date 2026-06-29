@@ -13,5 +13,5 @@ kernel.cl: $(SRC_DIR)/kernel.cl
 KERNEL_SRCS := kernel.cl
 
 # OPTS ?= -n32
-CXXFLAGS += -fdiagnostics-color=always
+CXXFLAGS += -fdiagnostics-color=always -fsanitize=address
 include ../common.mk

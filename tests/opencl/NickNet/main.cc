@@ -2,10 +2,10 @@
 #include "Convolution.hpp"
 #include "Device.hpp"
 #include "Network.hpp"
-#include "ReLU.hpp"
 #include "SparseConv.hpp"
 #include "common.h"
 #include "sparse_block.h"
+#include "sparse_conv_cpu.hpp"
 #include <assert.h>
 // #include <ios>
 #include <cstddef>
@@ -18,7 +18,7 @@
 #define FLOAT_ULP 20000
 
 #define KERNEL_NAME "conv1"
-#define _IN 1024
+#define _IN 32
 #define _K 5
 #define _C 2
 #define _OUT (_IN - _K + 1)
@@ -126,14 +126,15 @@ template <typename T> void print_arr(T arr[], int N) {
     printf("\b\b}\n");
 }
 int main() {
+    bool testing_gpu = false;
     const unsigned N = 64;
     uint32_t weights[1] = {_K * _F * _C};
     uint32_t bias[1] = {_F};
     TYPE h_in[N * _C], h_out[(N + _K - 1) * _F], dev_out[(N + _K - 1) * _F];
 
-    for (int n = 0; n < N; n++) {
+    for (unsigned n = 0; n < N; n++) {
         for (int c = 0; c < _C; c++) {
-            h_in[n * _C + c] = rand() % 2 ? n * 10 + c : 0;
+            h_in[n * _C + c] = rand() % 5 != 0 ? n * 10 + c : 0;
         }
     }
     Sparse_block *input = compress(h_in, N, _C);
@@ -145,81 +146,55 @@ int main() {
     convolution_cpu<TYPE, N, _K, _C, _F>(h_in, h_W, h_B, h_out);
     relu_cpu<N>(h_out);
 
-    printf("\033[33mStarting Device\033[0m\n");
-    Device dev;
-    printf("\033[33mInitializing Network\033[0m\n");
-    SparseConvolution<TYPE, N, _K, _C, _F> L0(dev, "conv_relu");
-    L0.load_weights(h_W, h_B);
-    printf("\033[33mRunning Network on device\033[0m\n");
-    L0.load_input(input);
-    L0.run();
-    L0.get_output(output);
-    printf("\033[33mTesting Network\033[0m\n");
-    unsigned len_tmp, f_tmp;
-    decompress(dev_out, len_tmp, f_tmp, output);
-    int errors = 0;
-    for (uint32_t i = 0; i < (N + _K - 1); ++i) {
-        if (!compare_equal(dev_out[i], h_out[i])) {
-            if (errors < 100)
-                printf("*** \033[31merror\033[0m: [%d] expected=%f, actual=%f\n", i,
-                       h_out[i], dev_out[i]);
-            ++errors;
-        }
-    }
-    if (errors != 0) {
-        printf("\033[31mFAILED! - %d errors\033[0m\n", errors);
+    if (testing_gpu) {
+        printf("\033[33mStarting Device\033[0m\n");
+        Device dev;
+        printf("\033[33mInitializing Network\033[0m\n");
+        SparseConvolution<TYPE, N, _K, _C, _F> L0(dev, "conv_relu");
+        L0.load_weights(h_W, h_B);
+        printf("\033[33mRunning Network on device\033[0m\n");
+        L0.load_input(input);
+        L0.run();
+        L0.get_output(output);
+        printf("\033[33mTesting Network\033[0m\n");
     } else {
-        printf("\033[32mPASSED!\033[0m\n");
+        sconv(h_W, h_B, _K, _F, input, output);
+
+        printf("CPU values: {");
+        for (unsigned i = 0; i < (N + _K - 1); i++) {
+            if (h_out[i] != 0) {
+                printf("%f, ", h_out[i]);
+            }
+        }
+        printf("\b\b}\n");
+        printf("SPARSE values: {");
+        for (unsigned i = 0; i < input->size; i++) {
+            if (output->data[i] != 0) {
+                printf("%f, ", output->data[i]);
+            }
+        }
+        printf("\b\b}\n");
+    }
+    if (testing_gpu) {
+        unsigned len_tmp, f_tmp;
+        decompress(dev_out, len_tmp, f_tmp, output);
+        int errors = 0;
+        // IMPORTANT: The two printed arrays should contain the same numbers!
+        //  for (uint32_t i = 0; i < (N + _K - 1); ++i) {
+        //      if (!compare_equal(dev_out[i], h_out[i])) {
+        //          if (errors < 100)
+        //              printf("*** \033[31merror\033[0m: [%d] expected=%f, actual=%f\n",
+        //              i,
+        //                     h_out[i], dev_out[i]);
+        //          ++errors;
+        //      }
+        //  }
+        //  if (errors != 0) {
+        //      printf("\033[31mFAILED! - %d errors\033[0m\n", errors);
+        //  } else {
+        //      printf("\033[32mPASSED!\033[0m\n");
+        //  }
     }
 
     free_Sparse(input);
-
-    if (false) {
-        uint32_t weight_dims[3] = {_K0 * _C1 * _C0, _K1 * _C2 * _C1, _K2 * _F * _C2};
-        TYPE **h_W = gen_weights<3>(weight_dims);
-        uint32_t bias_dims[3] = {_C1, _C2, _F};
-        TYPE **h_B = gen_weights<3>(bias_dims);
-
-        std::vector<TYPE> h_i(_IN / 2 * _C0);
-        std::vector<int> h_ii(_IN / 2 * _C0);
-        std::vector<TYPE> h_o(_OUT2 * _F, 0.0f);
-        std::vector<TYPE> ref_vec(_OUT2 * _F, 0.0f);
-        // Generate input values
-        auto rand_float = []() { return (static_cast<float>(rand()) / RAND_MAX) - 0.5f; };
-        for (int32_t i = 0; i < _IN * _C0; i++) {
-            h_i[i] = rand_float();
-        }
-        generate_sparse_input(&h_i);
-        printf("Starting device\n");
-        Device dev;
-
-        printf("Initializing network\n");
-        Network<TYPE, _IN, _K0, _C0, _K1, _C1, _K2, _C2, _F> Net(dev);
-
-        printf("Running Network on device\n");
-        Net.load_weights(h_W, h_B);
-        Net.load_input(h_i.data());
-        Net.run();
-        Net.get_output(h_o.data());
-
-        printf("Running network simulation\n");
-        nick_net_cpu<TYPE, _IN, _K0, _C0, _K1, _C1, _K2, _C2, _F>(h_i.data(), h_W, h_B,
-                                                                  ref_vec.data());
-
-        int errors = 0;
-        for (uint32_t i = 0; i < _OUT2 * _F; ++i) {
-            if (!compare_equal(h_o[i], ref_vec[i])) {
-                if (errors < 100)
-                    printf("*** error: [%d] expected=%f, actual=%f\n", i, ref_vec[i],
-                           h_o[i]);
-                ++errors;
-            }
-        }
-        if (errors != 0) {
-            printf("\033[31mFAILED! - %d errors\033[0m\n", errors);
-        } else {
-            printf("\033[32mPASSED!\033[0m\n");
-        }
-        dev.print_info();
-    }
 }

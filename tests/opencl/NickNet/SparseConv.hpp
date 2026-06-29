@@ -21,21 +21,21 @@ class SparseConvolution {
     cl_mem port_in = NULL;
     cl_mem w_memobj = NULL;
     cl_mem b_memobj = NULL;
-    cl_mem blocks_memobj = NULL;
-    cl_mem data_blocks_memobj = NULL;
+    cl_mem block_len_memobj = NULL;
+    cl_mem block_size_memobj = NULL;
     cl_mem port_out = NULL;
     uint32_t o_points = F * SPARSE_LEN;
     uint32_t i_points = C * SPARSE_LEN;
     uint32_t w_points = F * C * K;
     uint32_t b_points = F;
-    uint32_t blocks_points = SPARSE_LEN;
-    uint32_t data_blocks_points = F * SPARSE_LEN;
+    uint32_t block_len_points = SPARSE_LEN;
+    uint32_t block_size_points = SPARSE_LEN;
     size_t i_nbytes = sizeof(Sparse_block) + sizeof(T) * i_points;
     size_t w_nbytes = w_points * sizeof(T);
     size_t b_nbytes = b_points * sizeof(T);
 
-    size_t blocks_nbytes = blocks_points * sizeof(T);
-    size_t data_blocks_nbytes = data_blocks_points * sizeof(T);
+    size_t block_len_bytes = block_len_points * sizeof(char);
+    size_t block_size_bytes = block_size_points * sizeof(unsigned);
 
     size_t o_nbytes = sizeof(Sparse_block) + sizeof(T) * o_points;
     cl_kernel kernel = NULL;
@@ -70,14 +70,15 @@ class SparseConvolution {
                                                     b_nbytes, NULL, &cl_err));
         dev->buffers.push_back(b_memobj);
 
-        blocks_memobj = CL_CHECK2(cl_err, clCreateBuffer(dev->context, CL_MEM_READ_WRITE,
-                                                         blocks_nbytes, NULL, &cl_err));
-        dev->buffers.push_back(blocks_memobj);
-
-        data_blocks_memobj =
+        block_len_memobj =
             CL_CHECK2(cl_err, clCreateBuffer(dev->context, CL_MEM_READ_WRITE,
-                                             data_blocks_nbytes, NULL, &cl_err));
-        dev->buffers.push_back(data_blocks_memobj);
+                                             block_len_bytes, NULL, &cl_err));
+        dev->buffers.push_back(block_len_memobj);
+
+        block_size_memobj =
+            CL_CHECK2(cl_err, clCreateBuffer(dev->context, CL_MEM_READ_WRITE,
+                                             block_size_bytes, NULL, &cl_err));
+        dev->buffers.push_back(block_size_memobj);
 
         kernel = CL_CHECK2(cl_err, clCreateKernel(dev->program, kernel_name, &cl_err));
 
@@ -87,8 +88,8 @@ class SparseConvolution {
         CL_CHECK(clSetKernelArg(kernel, 3, sizeof(uint32_t), (void *)&f));      // F
         CL_CHECK(clSetKernelArg(kernel, 4, sizeof(cl_mem), (void *)&port_in));  // SRC
         CL_CHECK(clSetKernelArg(kernel, 5, sizeof(cl_mem), (void *)&port_out)); // DST
-        CL_CHECK(clSetKernelArg(kernel, 6, sizeof(cl_mem), (void *)&blocks_memobj));
-        CL_CHECK(clSetKernelArg(kernel, 7, sizeof(cl_mem), (void *)&data_blocks_memobj));
+        CL_CHECK(clSetKernelArg(kernel, 6, sizeof(cl_mem), (void *)&block_len_memobj));
+        CL_CHECK(clSetKernelArg(kernel, 7, sizeof(cl_mem), (void *)&block_size_memobj));
         q = dev_h.q;
     }
     ~SparseConvolution() {

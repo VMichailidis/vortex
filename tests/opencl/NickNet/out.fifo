@@ -2,24 +2,32 @@ CONFIGS=-DNUM_CORES=1 -DNUM_THREADS=16 -DNUM_WARPS=4 -DL2_ENABLE -DL3_ENABLE
 Running: CONFIGS="-DNUM_CORES=1 -DNUM_THREADS=16 -DNUM_WARPS=4 -DL2_ENABLE -DL3_ENABLE" make -C /vortex/build/ci/../runtime/simx > /dev/null
 Running: make -C "/vortex/build/ci/../tests/opencl/NickNet" run-simx
 make: Entering directory '/vortex/build/tests/opencl/NickNet'
+g++ -fdiagnostics-color=always -std=c++17 -Wall -Wextra -Wfatal-errors -Wno-deprecated-declarations -Wno-unused-parameter -Wno-narrowing -pthread -I/root/tools/pocl/include  -O2 -DNDEBUG -MM /vortex/tests/opencl/NickNet/main.cc > .depend;
 g++ -fdiagnostics-color=always -std=c++17 -Wall -Wextra -Wfatal-errors -Wno-deprecated-declarations -Wno-unused-parameter -Wno-narrowing -pthread -I/root/tools/pocl/include  -O2 -DNDEBUG -c /vortex/tests/opencl/NickNet/main.cc -o main.cc.o
 In file included from [01m[K/root/tools/pocl/include/CL/cl.h:20[m[K,
                  from [01m[K/vortex/tests/opencl/NickNet/main.cc:1[m[K:
 [01m[K/root/tools/pocl/include/CL/cl_version.h:22:104:[m[K [01;36m[Knote: [m[K'[01m[K#pragma message: cl_version.h: CL_TARGET_OPENCL_VERSION is not defined. Defaulting to 300 (OpenCL 3.0)[m[K'
    22 | #pragma message("cl_version.h: CL_TARGET_OPENCL_VERSION is not defined. Defaulting to 300 (OpenCL 3.0)"[01;36m[K)[m[K
       |                                                                                                        [01;36m[K^[m[K
-In file included from [01m[K/vortex/tests/opencl/NickNet/main.cc:7[m[K:
-[01m[K/vortex/tests/opencl/NickNet/sparse_array.h:[m[K In function '[01m[Kvoid[01;32m[K decompress[m[K(float*, unsigned int&, unsigned int&, Sparse_array*)[m[K':
-[01m[K/vortex/tests/opencl/NickNet/sparse_array.h:110:22:[m[K [01;35m[Kwarning: [m[Kleft shift of negative value [[01;35m[K-Wshift-negative-value[m[K]
-  110 |                 ~([01;35m[K~0 << c[m[K) & sarr->mask[idx]); // find the position of channel c in val
+In file included from [01m[K/vortex/tests/opencl/NickNet/SparseConv.hpp:8[m[K,
+                 from [01m[K/vortex/tests/opencl/NickNet/main.cc:5[m[K:
+[01m[K/vortex/tests/opencl/NickNet/sparse_block.h:[m[K In function '[01m[Kvoid[01;32m[K accumulate_indexes[m[K(Sparse_block*)[m[K':
+[01m[K/vortex/tests/opencl/NickNet/sparse_block.h:78:28:[m[K [01;35m[Kwarning: [m[Kcomparison of integer expressions of different signedness: '[01m[Kunsigned int[m[K' and '[01m[Kint[m[K' [[01;35m[K-Wsign-compare[m[K]
+   78 |     for (unsigned n = 0; [01;35m[Kn < sarr->len - 1[m[K; n++) {
+      |                          [01;35m[K~~^~~~~~~~~~~~~~~[m[K
+[01m[K/vortex/tests/opencl/NickNet/sparse_block.h:[m[K In function '[01m[Kvoid[01;32m[K decompress[m[K(float*, unsigned int&, unsigned int&, Sparse_block*)[m[K':
+[01m[K/vortex/tests/opencl/NickNet/sparse_block.h:93:22:[m[K [01;35m[Kwarning: [m[Kleft shift of negative value [[01;35m[K-Wshift-negative-value[m[K]
+   93 |                 ~([01;35m[K~0 << c[m[K) & sarr->mask[idx]); // find the position of channel c in val
       |                   [01;35m[K~~~^~~~[m[K
+In file included from [01m[K/vortex/tests/opencl/NickNet/main.cc:8[m[K:
+[01m[K/vortex/tests/opencl/NickNet/sparse_conv_cpu.hpp:[m[K In function '[01m[Kvoid[01;32m[K sconv[m[K(float*, float*, unsigned int, unsigned int, Sparse_block*, Sparse_block*)[m[K':
+[01m[K/vortex/tests/opencl/NickNet/sparse_conv_cpu.hpp:22:63:[m[K [01;35m[Kwarning: [m[Kleft shift of negative value [[01;35m[K-Wshift-negative-value[m[K]
+   22 |                     unsigned offset = __builtin_popcount(~([01;35m[K~0 << c[m[K)) & src->mask[sample];
+      |                                                            [01;35m[K~~~^~~~[m[K
 [01m[K/vortex/tests/opencl/NickNet/main.cc:[m[K In function '[01m[Kint[01;32m[K main[m[K()[m[K':
-[01m[K/vortex/tests/opencl/NickNet/main.cc:131:23:[m[K [01;35m[Kwarning: [m[Kcomparison of integer expressions of different signedness: '[01m[Kint[m[K' and '[01m[Kunsigned int[m[K' [[01;35m[K-Wsign-compare[m[K]
-  131 |     for (int n = 0; [01;35m[Kn < N[m[K; n++) {
-      |                     [01;35m[K~~^~~[m[K
-[01m[K/vortex/tests/opencl/NickNet/main.cc:132:27:[m[K [01;35m[Kwarning: [m[Kcomparison of integer expressions of different signedness: '[01m[Kint[m[K' and '[01m[Kunsigned int[m[K' [[01;35m[K-Wsign-compare[m[K]
-  132 |         for (int c = 0; [01;35m[Kc < C[m[K; c++) {
-      |                         [01;35m[K~~^~~[m[K
+[01m[K/vortex/tests/opencl/NickNet/main.cc:181:13:[m[K [01;35m[Kwarning: [m[Kunused variable '[01m[Kerrors[m[K' [[01;35m[K-Wunused-variable[m[K]
+  181 |         int [01;35m[Kerrors[m[K = 0;
+      |             [01;35m[K^~~~~~[m[K
 In file included from [01m[K/vortex/tests/opencl/NickNet/Convolution.hpp:8[m[K,
                  from [01m[K/vortex/tests/opencl/NickNet/main.cc:2[m[K:
 /vortex/tests/opencl/NickNet/Device.hpp: In instantiation of '[01m[KT Device::[01;32m[Kget_param[m[K(cl_device_info, bool, const char*) [35m[K[with T = long unsigned int; cl_device_info = unsigned int][m[K[m[K':
@@ -30,10 +38,9 @@ In file included from [01m[K/vortex/tests/opencl/NickNet/Convolution.hpp:8[m
       |                            [01;35m[K|[m[K                                 [32m[K|[m[K
       |                            [01;35m[Kint[m[K                               [32m[Klong unsigned int[m[K
       |                           [32m[K%ld[m[K
-/vortex/tests/opencl/NickNet/Convolution.hpp: In instantiation of '[01m[K_cl_event* Convolution<T, IN, K, C, F>::[01;32m[Krun[m[K() [35m[K[with T = float; unsigned int IN = 1024; unsigned int K = 5; unsigned int C = 6; unsigned int F = 6; cl_event = _cl_event*][m[K[m[K':
-[01m[K/vortex/tests/opencl/NickNet/Network.hpp:49:16:[m[K   required from '[01m[Kvoid Network<T, IN, K0, C0, K1, C1, K2, C2, F>::[01;32m[Krun[m[K() [35m[K[with T = float; unsigned int IN = 1024; unsigned int K0 = 5; unsigned int C0 = 6; unsigned int K1 = 5; unsigned int C1 = 6; unsigned int K2 = 5; unsigned int C2 = 6; unsigned int F = 8][m[K[m[K'
-[01m[K/vortex/tests/opencl/NickNet/main.cc:186:16:[m[K   required from here
-[01m[K/vortex/tests/opencl/NickNet/Convolution.hpp:120:71:[m[K [01;35m[Kwarning: [m[Kformat '[01m[K%d[m[K' expects argument of type '[01m[Kint[m[K', but argument 2 has type '[01m[Klong unsigned int[m[K' [[01;35m[K-Wformat=[m[K]
+/vortex/tests/opencl/NickNet/SparseConv.hpp: In instantiation of '[01m[K_cl_event* SparseConvolution<T, IN, K, C, F>::[01;32m[Krun[m[K() [35m[K[with T = float; unsigned int IN = 64; unsigned int K = 5; unsigned int C = 2; unsigned int F = 8; cl_event = _cl_event*][m[K[m[K':
+[01m[K/vortex/tests/opencl/NickNet/main.cc:157:15:[m[K   required from here
+[01m[K/vortex/tests/opencl/NickNet/SparseConv.hpp:120:71:[m[K [01;35m[Kwarning: [m[Kformat '[01m[K%d[m[K' expects argument of type '[01m[Kint[m[K', but argument 2 has type '[01m[Klong unsigned int[m[K' [[01;35m[K-Wformat=[m[K]
   120 |             printf("\033[31mError:\033[0m Requested work group size ([01;35m[K%d[m[K) is greater than "
       |                                                                      [01;35m[K~^[m[K
       |                                                                       [01;35m[K|[m[K
@@ -44,7 +51,7 @@ In file included from [01m[K/vortex/tests/opencl/NickNet/Convolution.hpp:8[m
       |                    [32m[K~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[m[K                       
       |                                  [32m[K|[m[K
       |                                  [32m[Klong unsigned int[m[K
-[01m[K/vortex/tests/opencl/NickNet/Convolution.hpp:123:28:[m[K [01;35m[Kwarning: [m[Kformat '[01m[K%d[m[K' expects argument of type '[01m[Kint[m[K', but argument 3 has type '[01m[Ksize_t[m[K' {aka '[01m[Klong unsigned int[m[K'} [[01;35m[K-Wformat=[m[K]
+[01m[K/vortex/tests/opencl/NickNet/SparseConv.hpp:123:28:[m[K [01;35m[Kwarning: [m[Kformat '[01m[K%d[m[K' expects argument of type '[01m[Kint[m[K', but argument 3 has type '[01m[Ksize_t[m[K' {aka '[01m[Klong unsigned int[m[K'} [[01;35m[K-Wformat=[m[K]
   123 |                    "size ([01;35m[K%d[m[K)\n",
       |                           [01;35m[K~^[m[K
       |                            [01;35m[K|[m[K
@@ -54,83 +61,12 @@ In file included from [01m[K/vortex/tests/opencl/NickNet/Convolution.hpp:8[m
       |                                                   [32m[K~~~~~~~~[m[K
       |                                                   [32m[K|[m[K
       |                                                   [32m[Ksize_t {aka long unsigned int}[m[K
-/vortex/tests/opencl/NickNet/Convolution.hpp: In instantiation of '[01m[K_cl_event* Convolution<T, IN, K, C, F>::[01;32m[Krun[m[K() [35m[K[with T = float; unsigned int IN = 1020; unsigned int K = 5; unsigned int C = 6; unsigned int F = 6; cl_event = _cl_event*][m[K[m[K':
-[01m[K/vortex/tests/opencl/NickNet/Network.hpp:50:16:[m[K   required from '[01m[Kvoid Network<T, IN, K0, C0, K1, C1, K2, C2, F>::[01;32m[Krun[m[K() [35m[K[with T = float; unsigned int IN = 1024; unsigned int K0 = 5; unsigned int C0 = 6; unsigned int K1 = 5; unsigned int C1 = 6; unsigned int K2 = 5; unsigned int C2 = 6; unsigned int F = 8][m[K[m[K'
-[01m[K/vortex/tests/opencl/NickNet/main.cc:186:16:[m[K   required from here
-[01m[K/vortex/tests/opencl/NickNet/Convolution.hpp:120:71:[m[K [01;35m[Kwarning: [m[Kformat '[01m[K%d[m[K' expects argument of type '[01m[Kint[m[K', but argument 2 has type '[01m[Klong unsigned int[m[K' [[01;35m[K-Wformat=[m[K]
-  120 |             printf("\033[31mError:\033[0m Requested work group size ([01;35m[K%d[m[K) is greater than "
-      |                                                                      [01;35m[K~^[m[K
-      |                                                                       [01;35m[K|[m[K
-      |                                                                       [01;35m[Kint[m[K
-      |                                                                      [32m[K%ld[m[K
-......
-  124 |                    [32m[Klocal_size[0] * local_size[1][m[K, max_size);
-      |                    [32m[K~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[m[K                       
-      |                                  [32m[K|[m[K
-      |                                  [32m[Klong unsigned int[m[K
-[01m[K/vortex/tests/opencl/NickNet/Convolution.hpp:123:28:[m[K [01;35m[Kwarning: [m[Kformat '[01m[K%d[m[K' expects argument of type '[01m[Kint[m[K', but argument 3 has type '[01m[Ksize_t[m[K' {aka '[01m[Klong unsigned int[m[K'} [[01;35m[K-Wformat=[m[K]
-  123 |                    "size ([01;35m[K%d[m[K)\n",
-      |                           [01;35m[K~^[m[K
-      |                            [01;35m[K|[m[K
-      |                            [01;35m[Kint[m[K
-      |                           [32m[K%ld[m[K
-  124 |                    local_size[0] * local_size[1], [32m[Kmax_size[m[K);
-      |                                                   [32m[K~~~~~~~~[m[K
-      |                                                   [32m[K|[m[K
-      |                                                   [32m[Ksize_t {aka long unsigned int}[m[K
-/vortex/tests/opencl/NickNet/Convolution.hpp: In instantiation of '[01m[K_cl_event* Convolution<T, IN, K, C, F>::[01;32m[Krun[m[K() [35m[K[with T = float; unsigned int IN = 1016; unsigned int K = 5; unsigned int C = 6; unsigned int F = 8; cl_event = _cl_event*][m[K[m[K':
-[01m[K/vortex/tests/opencl/NickNet/Network.hpp:51:16:[m[K   required from '[01m[Kvoid Network<T, IN, K0, C0, K1, C1, K2, C2, F>::[01;32m[Krun[m[K() [35m[K[with T = float; unsigned int IN = 1024; unsigned int K0 = 5; unsigned int C0 = 6; unsigned int K1 = 5; unsigned int C1 = 6; unsigned int K2 = 5; unsigned int C2 = 6; unsigned int F = 8][m[K[m[K'
-[01m[K/vortex/tests/opencl/NickNet/main.cc:186:16:[m[K   required from here
-[01m[K/vortex/tests/opencl/NickNet/Convolution.hpp:120:71:[m[K [01;35m[Kwarning: [m[Kformat '[01m[K%d[m[K' expects argument of type '[01m[Kint[m[K', but argument 2 has type '[01m[Klong unsigned int[m[K' [[01;35m[K-Wformat=[m[K]
-  120 |             printf("\033[31mError:\033[0m Requested work group size ([01;35m[K%d[m[K) is greater than "
-      |                                                                      [01;35m[K~^[m[K
-      |                                                                       [01;35m[K|[m[K
-      |                                                                       [01;35m[Kint[m[K
-      |                                                                      [32m[K%ld[m[K
-......
-  124 |                    [32m[Klocal_size[0] * local_size[1][m[K, max_size);
-      |                    [32m[K~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[m[K                       
-      |                                  [32m[K|[m[K
-      |                                  [32m[Klong unsigned int[m[K
-[01m[K/vortex/tests/opencl/NickNet/Convolution.hpp:123:28:[m[K [01;35m[Kwarning: [m[Kformat '[01m[K%d[m[K' expects argument of type '[01m[Kint[m[K', but argument 3 has type '[01m[Ksize_t[m[K' {aka '[01m[Klong unsigned int[m[K'} [[01;35m[K-Wformat=[m[K]
-  123 |                    "size ([01;35m[K%d[m[K)\n",
-      |                           [01;35m[K~^[m[K
-      |                            [01;35m[K|[m[K
-      |                            [01;35m[Kint[m[K
-      |                           [32m[K%ld[m[K
-  124 |                    local_size[0] * local_size[1], [32m[Kmax_size[m[K);
-      |                                                   [32m[K~~~~~~~~[m[K
-      |                                                   [32m[K|[m[K
-      |                                                   [32m[Ksize_t {aka long unsigned int}[m[K
+[01m[K/vortex/tests/opencl/NickNet/main.cc:[m[K At global scope:
+[01m[K/vortex/tests/opencl/NickNet/main.cc:36:13:[m[K [01;35m[Kwarning: [m[K'[01m[Kbool[01;32m[K compare_equal[m[K(float, float)[m[K' defined but not used [[01;35m[K-Wunused-function[m[K]
+   36 | static bool [01;35m[Kcompare_equal[m[K(float a, float b) {
+      |             [01;35m[K^~~~~~~~~~~~~[m[K
 g++ -fdiagnostics-color=always -std=c++17 -Wall -Wextra -Wfatal-errors -Wno-deprecated-declarations -Wno-unused-parameter -Wno-narrowing -pthread -I/root/tools/pocl/include  -O2 -DNDEBUG main.cc.o -Wl,-rpath,/root/tools/llvm-vortex/lib -L/vortex/build/runtime -lvortex -L/root/tools/pocl/lib -lOpenCL -o NickNet
 LD_LIBRARY_PATH=/root/tools/pocl/lib:/vortex/build/runtime:/root/tools/llvm-vortex/lib: POCL_VORTEX_XLEN=32 LLVM_PREFIX=/root/tools/llvm-vortex POCL_VORTEX_BINTOOL="OBJCOPY=/root/tools/llvm-vortex/bin/llvm-objcopy /vortex/kernel/scripts/vxbin.py" POCL_VORTEX_CFLAGS="-march=rv32imaf -mabi=ilp32f -O3 -mcmodel=medany --sysroot=/root/tools/riscv32-gnu-toolchain/riscv32-unknown-elf --gcc-toolchain=/root/tools/riscv32-gnu-toolchain -fno-rtti -fno-exceptions -nostartfiles -nostdlib -fdata-sections -ffunction-sections -I/vortex/build/hw -I/vortex/kernel/include -DXLEN_32 -DNDEBUG  -Xclang -target-feature -Xclang +vortex -Xclang -target-feature -Xclang +zicond -mllvm -disable-loop-idiom-all	" POCL_VORTEX_LDFLAGS="-Wl,-Bstatic,--gc-sections,-T/vortex/kernel/scripts/link32.ld,--defsym=STARTUP_ADDR=0x80000000 /vortex/build/kernel/libvortex.a -L/root/tools/libc32/lib -lm -lc /root/tools/libcrt32/lib/baremetal/libclang_rt.builtins-riscv32.a" VORTEX_DRIVER=simx ./NickNet 
-{ 
-0.0, 0.0, 2.0, 
-10.0, 11.0, 12.0, 
-0.0, 0.0, 22.0, 
-30.0, 0.0, 32.0, 
-0.0, 41.0, 42.0, 
-0.0, 0.0, 0.0, 
-0.0, 0.0, 62.0, 
-0.0, 71.0, 72.0, 
-0.0, 0.0, 0.0, 
-90.0, 91.0, 92.0, 
-}
-Size: 15, Samples: 8
-{2.0, 10.0, 11.0, 12.0, 22.0, 30.0, 32.0, 41.0, 42.0, 62.0, 71.0, 72.0, 90.0, 91.0, 92.0, }
-{ 0, 1, 2, 3, 4, 6, 7, 9, }
-{ 4, 7, 4, 5, 6, 4, 6, 7, }
-{ 
-0.0, 0.0, 2.0, 
-10.0, 11.0, 12.0, 
-0.0, 0.0, 22.0, 
-30.0, 0.0, 32.0, 
-0.0, 41.0, 42.0, 
-0.0, 0.0, 0.0, 
-0.0, 0.0, 62.0, 
-0.0, 71.0, 72.0, 
-0.0, 0.0, 0.0, 
-90.0, 91.0, 92.0, 
-}
-PASSED!
+CPU values: {91.526176, 27.843964, 13.794724, 85.412445, -134.153900, -5.368462, -23.789070, 61.142815, }
+SPARSE values: {0.149707, 0.129480, 0.200620, 0.149707, 0.129480, 0.200620, 0.149707, 0.129480, 0.200620, 7.839458, 0.149707, 0.129480, 0.200620, 0.149707, 0.129480, 0.200620, 19.693090, 0.149707, 0.129480, 0.200620, 0.149707, 0.129480, 0.200620, 3.200507, 0.149707, 0.129480, 0.200620, 0.149707, 0.129480, 0.200620, 0.149707, 0.129480, 0.200620, 0.149707, 0.129480, 0.200620, 0.149707, 0.129480, 0.200620, 0.149707, 0.129480, 0.200620, }
 make: Leaving directory '/vortex/build/tests/opencl/NickNet'

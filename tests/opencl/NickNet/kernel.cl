@@ -121,37 +121,43 @@ void pack_samples(__global Sparse_block *block) {
 // Pack blocks of 2^N samples
 // Each block is assumed packed with blocks[i] elements
 // len is the number of samples
-void concat(__global Sparse_block *block, __global unsigned char *blocks,
-            __global unsigned char *data_blocks, int N) {
-    int id = get_global_id(1) * get_global_size(0) + get_global_id(0);
+void concat(__global Sparse_block *block, __global unsigned char *block_len,
+            __global unsigned *block_size, unsigned N) {
+    unsigned id = get_global_id(1) * get_global_size(0) + get_global_id(0);
+    id = get_global_id(1);
     if (id >= block->len)
         return;
     if (N == 0) {
-        int pop = __builtin_popcount(block->mask[id]);
-        data_blocks[id] = pop;
-        blocks[id] = pop > 0 ? 1 : 0;
+        unsigned pop = __builtin_popcount(block->mask[id]);
+        block_size[id] = pop;
+        block_len[id] = pop > 0 ? 1 : 0;
 
         return;
     }
-    int b = (block->len + (1 << N) - 1) / (1 << N); // number of groups
+    unsigned b = block->len / (1 << N); // number of groups
     if (id >= b * (1 << (N - 1)))
         return;
-    int group = (2 * id) / (1 << N); // each group contains 2^N / 2 work items
-    int group_size = (1 << (N - 1));
-    int item = id - group * group_size;
-    int group_offset_l = group << N;                      // offset of left block
-    int group_offset_r = group_offset_l + (1 << (N - 1)); // offset of right block
-    int len_l = blocks[group_offset_l];                   // packed length of left block
-    int len_r = blocks[group_offset_r];                   // packed length of right block
-    int len_new = len_l + len_r;
-    int size_l = data_blocks[group_offset_l]; // packed size of left block
-    int size_r = data_blocks[group_offset_r]; // packed size of right block
-    int size_new = size_l + size_r;
-    int shift_delta = block->C * (1 << N) - size_l;
 
-    if (item == 0) {
-        blocks[group_offset_l] = len_new;
-        data_blocks[group_offset_l] = size_new;
+    unsigned group = 2 * id / (1 << N); // each group employs 2^N / 2 work items
+    unsigned group_size = 1 << (N - 1);
+    unsigned item = id % group_size;
+    unsigned group_offset_l = group << group_size;         // offset of left block
+    unsigned group_offset_r = group_offset_l + group_size; // offset of right block
+    unsigned len_l = block_len[group_offset_l];            // packed length of left block
+    unsigned len_r = block_len[group_offset_r];            // packed length of right block
+    unsigned len_new = len_l + len_r;
+    unsigned size_l = group_offset_l > block->len
+                          ? 0
+                          : block_size[group_offset_l]; // packed size of left block
+    unsigned size_r = group_offset_r > block->len
+                          ? 0
+                          : block_size[group_offset_r]; // packed size of right block
+    unsigned size_new = size_l + size_r;
+    unsigned shift_delta = (1 << (N - 1)) - size_l;
+
+    if (item == 0 && group_offset_l < block->len) {
+        block_len[group_offset_l] = len_new;
+        block_size[group_offset_l] = size_new;
     }
     if (item < len_r) {
         block->samples[group_offset_l + len_l + item] =
@@ -168,7 +174,7 @@ void concat(__global Sparse_block *block, __global unsigned char *blocks,
 }
 
 void compress(__global Sparse_block *block, __global unsigned char *blocks,
-              __global unsigned char *data_blocks) {
+              __global unsigned *data_blocks) {
 
     unsigned iterations = 0;
     unsigned len = block->len;
@@ -190,8 +196,7 @@ void compress(__global Sparse_block *block, __global unsigned char *blocks,
 __kernel void conv_relu(__global TYPE *W, __global TYPE *B, const int K, const unsigned F,
                         __global Sparse_block *src, __global Sparse_block *dst,
                         // helper buffers of size SPARSE_LEN
-                        __global unsigned char *blocks,
-                        __global unsigned char *data_blocks) {
+                        __global unsigned char *blocks, __global unsigned *data_blocks) {
     unsigned char f = get_global_id(0);
     unsigned char tr = get_global_id(1);
     if (f == 0 && tr == 0)
@@ -214,9 +219,8 @@ __kernel void conv_relu(__global TYPE *W, __global TYPE *B, const int K, const u
     gen_mask(dst);
     barrier(CLK_GLOBAL_MEM_FENCE);
 
-    if (f == 0 && tr == 0) {
+    if (f == 0 && tr == 0)
         printf("Packing Output\n");
-    }
     barrier(CLK_GLOBAL_MEM_FENCE);
 
     pack_samples(dst);
