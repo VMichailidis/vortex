@@ -64,19 +64,17 @@ TYPE conv(__global TYPE *W, __global TYPE *B, const int K, __global Sparse_block
     unsigned char sample = tr;
     TYPE acc = B[f];
 
-    while (sample < src->len - K + 1 && src->samples[sample] < (tr + K)) {
+    while (sample < src->len - K + 1 && src->samples[sample] < (src->samples[tr] + K)) {
         unsigned char mask = src->mask[sample];
-        unsigned char channel = __builtin_ffs(mask);
         while (mask) {
+            unsigned char channel = __builtin_ffs(mask);
             unsigned char c = channel - 1;
             unsigned offset = __builtin_popcount(~(~0 << c) & src->mask[sample]);
-            unsigned char k_pos = src->samples[sample] - tr;
-
+            unsigned k_pos = src->samples[sample] - src->samples[tr];
             acc +=
                 W[f * src->C * K + c * K + k_pos] * src->data[src->ptx[sample] + offset];
 
-            mask >>= channel;
-            channel = __builtin_ffs(mask);
+            mask = mask & (~0 << channel);
         }
         sample++;
     }

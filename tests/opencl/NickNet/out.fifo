@@ -12,22 +12,24 @@ In file included from [01m[K/root/tools/pocl/include/CL/cl.h:20[m[K,
 In file included from [01m[K/vortex/tests/opencl/NickNet/SparseConv.hpp:8[m[K,
                  from [01m[K/vortex/tests/opencl/NickNet/main.cc:5[m[K:
 [01m[K/vortex/tests/opencl/NickNet/sparse_block.h:[m[K In function '[01m[Kvoid[01;32m[K accumulate_indexes[m[K(Sparse_block*)[m[K':
-[01m[K/vortex/tests/opencl/NickNet/sparse_block.h:78:28:[m[K [01;35m[Kwarning: [m[Kcomparison of integer expressions of different signedness: '[01m[Kunsigned int[m[K' and '[01m[Kint[m[K' [[01;35m[K-Wsign-compare[m[K]
-   78 |     for (unsigned n = 0; [01;35m[Kn < sarr->len - 1[m[K; n++) {
+[01m[K/vortex/tests/opencl/NickNet/sparse_block.h:81:28:[m[K [01;35m[Kwarning: [m[Kcomparison of integer expressions of different signedness: '[01m[Kunsigned int[m[K' and '[01m[Kint[m[K' [[01;35m[K-Wsign-compare[m[K]
+   81 |     for (unsigned n = 0; [01;35m[Kn < sarr->len - 1[m[K; n++) {
       |                          [01;35m[K~~^~~~~~~~~~~~~~~[m[K
-[01m[K/vortex/tests/opencl/NickNet/sparse_block.h:[m[K In function '[01m[Kvoid[01;32m[K decompress[m[K(float*, unsigned int&, unsigned int&, Sparse_block*)[m[K':
-[01m[K/vortex/tests/opencl/NickNet/sparse_block.h:93:22:[m[K [01;35m[Kwarning: [m[Kleft shift of negative value [[01;35m[K-Wshift-negative-value[m[K]
-   93 |                 ~([01;35m[K~0 << c[m[K) & sarr->mask[idx]); // find the position of channel c in val
-      |                   [01;35m[K~~~^~~~[m[K
+[01m[K/vortex/tests/opencl/NickNet/sparse_block.h:[m[K In function '[01m[Kvoid[01;32m[K decompress[m[K(float*, unsigned int, unsigned int, Sparse_block*)[m[K':
+[01m[K/vortex/tests/opencl/NickNet/sparse_block.h:101:55:[m[K [01;35m[Kwarning: [m[Kleft shift of negative value [[01;35m[K-Wshift-negative-value[m[K]
+  101 |             unsigned offset = __builtin_popcount(~([01;35m[K~0 << c[m[K) & sarr->mask[s]);
+      |                                                    [01;35m[K~~~^~~~[m[K
+[01m[K/vortex/tests/opencl/NickNet/sparse_block.h:103:24:[m[K [01;35m[Kwarning: [m[Kleft shift of negative value [[01;35m[K-Wshift-negative-value[m[K]
+  103 |             mask &= [01;35m[K~0 << channel[m[K;
+      |                     [01;35m[K~~~^~~~~~~~~~[m[K
 In file included from [01m[K/vortex/tests/opencl/NickNet/main.cc:8[m[K:
 [01m[K/vortex/tests/opencl/NickNet/sparse_conv_cpu.hpp:[m[K In function '[01m[Kvoid[01;32m[K sconv[m[K(float*, float*, unsigned int, unsigned int, Sparse_block*, Sparse_block*)[m[K':
-[01m[K/vortex/tests/opencl/NickNet/sparse_conv_cpu.hpp:22:63:[m[K [01;35m[Kwarning: [m[Kleft shift of negative value [[01;35m[K-Wshift-negative-value[m[K]
-   22 |                     unsigned offset = __builtin_popcount(~([01;35m[K~0 << c[m[K)) & src->mask[sample];
+[01m[K/vortex/tests/opencl/NickNet/sparse_conv_cpu.hpp:48:63:[m[K [01;35m[Kwarning: [m[Kleft shift of negative value [[01;35m[K-Wshift-negative-value[m[K]
+   48 |                     unsigned offset = __builtin_popcount(~([01;35m[K~0 << c[m[K) & src->mask[sample]);
       |                                                            [01;35m[K~~~^~~~[m[K
-[01m[K/vortex/tests/opencl/NickNet/main.cc:[m[K In function '[01m[Kint[01;32m[K main[m[K()[m[K':
-[01m[K/vortex/tests/opencl/NickNet/main.cc:181:13:[m[K [01;35m[Kwarning: [m[Kunused variable '[01m[Kerrors[m[K' [[01;35m[K-Wunused-variable[m[K]
-  181 |         int [01;35m[Kerrors[m[K = 0;
-      |             [01;35m[K^~~~~~[m[K
+[01m[K/vortex/tests/opencl/NickNet/sparse_conv_cpu.hpp:52:39:[m[K [01;35m[Kwarning: [m[Kleft shift of negative value [[01;35m[K-Wshift-negative-value[m[K]
+   52 |                     mask = mask & ([01;35m[K~0 << channel[m[K);
+      |                                    [01;35m[K~~~^~~~~~~~~~[m[K
 In file included from [01m[K/vortex/tests/opencl/NickNet/Convolution.hpp:8[m[K,
                  from [01m[K/vortex/tests/opencl/NickNet/main.cc:2[m[K:
 /vortex/tests/opencl/NickNet/Device.hpp: In instantiation of '[01m[KT Device::[01;32m[Kget_param[m[K(cl_device_info, bool, const char*) [35m[K[with T = long unsigned int; cl_device_info = unsigned int][m[K[m[K':
@@ -38,8 +40,13 @@ In file included from [01m[K/vortex/tests/opencl/NickNet/Convolution.hpp:8[m
       |                            [01;35m[K|[m[K                                 [32m[K|[m[K
       |                            [01;35m[Kint[m[K                               [32m[Klong unsigned int[m[K
       |                           [32m[K%ld[m[K
+/vortex/tests/opencl/NickNet/main.cc: In instantiation of '[01m[Kfloat**[01;32m[K gen_weights[m[K(uint32_t*) [35m[K[with unsigned int L = 1; uint32_t = unsigned int][m[K[m[K':
+[01m[K/vortex/tests/opencl/NickNet/main.cc:145:31:[m[K   required from here
+[01m[K/vortex/tests/opencl/NickNet/main.cc:50:10:[m[K [01;35m[Kwarning: [m[Kvariable '[01m[Krand_float[m[K' set but not used [[01;35m[K-Wunused-but-set-variable[m[K]
+   50 |     auto [01;35m[Krand_float[m[K = []() { return (static_cast<float>(rand()) / RAND_MAX) - 0.5f; };
+      |          [01;35m[K^~~~~~~~~~[m[K
 /vortex/tests/opencl/NickNet/SparseConv.hpp: In instantiation of '[01m[K_cl_event* SparseConvolution<T, IN, K, C, F>::[01;32m[Krun[m[K() [35m[K[with T = float; unsigned int IN = 64; unsigned int K = 5; unsigned int C = 2; unsigned int F = 8; cl_event = _cl_event*][m[K[m[K':
-[01m[K/vortex/tests/opencl/NickNet/main.cc:157:15:[m[K   required from here
+[01m[K/vortex/tests/opencl/NickNet/main.cc:158:15:[m[K   required from here
 [01m[K/vortex/tests/opencl/NickNet/SparseConv.hpp:120:71:[m[K [01;35m[Kwarning: [m[Kformat '[01m[K%d[m[K' expects argument of type '[01m[Kint[m[K', but argument 2 has type '[01m[Klong unsigned int[m[K' [[01;35m[K-Wformat=[m[K]
   120 |             printf("\033[31mError:\033[0m Requested work group size ([01;35m[K%d[m[K) is greater than "
       |                                                                      [01;35m[K~^[m[K
@@ -61,12 +68,57 @@ In file included from [01m[K/vortex/tests/opencl/NickNet/Convolution.hpp:8[m
       |                                                   [32m[K~~~~~~~~[m[K
       |                                                   [32m[K|[m[K
       |                                                   [32m[Ksize_t {aka long unsigned int}[m[K
-[01m[K/vortex/tests/opencl/NickNet/main.cc:[m[K At global scope:
-[01m[K/vortex/tests/opencl/NickNet/main.cc:36:13:[m[K [01;35m[Kwarning: [m[K'[01m[Kbool[01;32m[K compare_equal[m[K(float, float)[m[K' defined but not used [[01;35m[K-Wunused-function[m[K]
-   36 | static bool [01;35m[Kcompare_equal[m[K(float a, float b) {
-      |             [01;35m[K^~~~~~~~~~~~~[m[K
 g++ -fdiagnostics-color=always -std=c++17 -Wall -Wextra -Wfatal-errors -Wno-deprecated-declarations -Wno-unused-parameter -Wno-narrowing -pthread -I/root/tools/pocl/include  -O2 -DNDEBUG main.cc.o -Wl,-rpath,/root/tools/llvm-vortex/lib -L/vortex/build/runtime -lvortex -L/root/tools/pocl/lib -lOpenCL -o NickNet
 LD_LIBRARY_PATH=/root/tools/pocl/lib:/vortex/build/runtime:/root/tools/llvm-vortex/lib: POCL_VORTEX_XLEN=32 LLVM_PREFIX=/root/tools/llvm-vortex POCL_VORTEX_BINTOOL="OBJCOPY=/root/tools/llvm-vortex/bin/llvm-objcopy /vortex/kernel/scripts/vxbin.py" POCL_VORTEX_CFLAGS="-march=rv32imaf -mabi=ilp32f -O3 -mcmodel=medany --sysroot=/root/tools/riscv32-gnu-toolchain/riscv32-unknown-elf --gcc-toolchain=/root/tools/riscv32-gnu-toolchain -fno-rtti -fno-exceptions -nostartfiles -nostdlib -fdata-sections -ffunction-sections -I/vortex/build/hw -I/vortex/kernel/include -DXLEN_32 -DNDEBUG  -Xclang -target-feature -Xclang +vortex -Xclang -target-feature -Xclang +zicond -mllvm -disable-loop-idiom-all	" POCL_VORTEX_LDFLAGS="-Wl,-Bstatic,--gc-sections,-T/vortex/kernel/scripts/link32.ld,--defsym=STARTUP_ADDR=0x80000000 /vortex/build/kernel/libvortex.a -L/root/tools/libc32/lib -lm -lc /root/tools/libcrt32/lib/baremetal/libclang_rt.builtins-riscv32.a" VORTEX_DRIVER=simx ./NickNet 
-CPU values: {91.526176, 27.843964, 13.794724, 85.412445, -134.153900, -5.368462, -23.789070, 61.142815, }
-SPARSE values: {0.149707, 0.129480, 0.200620, 0.149707, 0.129480, 0.200620, 0.149707, 0.129480, 0.200620, 7.839458, 0.149707, 0.129480, 0.200620, 0.149707, 0.129480, 0.200620, 19.693090, 0.149707, 0.129480, 0.200620, 0.149707, 0.129480, 0.200620, 3.200507, 0.149707, 0.129480, 0.200620, 0.149707, 0.129480, 0.200620, 0.149707, 0.129480, 0.200620, 0.149707, 0.129480, 0.200620, 0.149707, 0.129480, 0.200620, 0.149707, 0.129480, 0.200620, }
-make: Leaving directory '/vortex/build/tests/opencl/NickNet'
+{0, 0, 1, 11, 2, 12, 0, 0, 4, 14, 0, 15, 0, 16, 7, 0, 0, 0, 0, 0, 10, 0, 11, 21, 0, 0, 0, 23, 14, 24, 15, 0, 0, 0, 17, 27, 18, 0, 19, 0, 20, 30, 21, 31, 0, 32, 0, 0, 24, 0, 25, 0, 26, 0, 0, 37, 0, 0, 0, 39, 30, 40, 0, 41, 0, 42, 0, 43, 34, 44, 0, 45, 0, 46, 0, 47, 0, 0, 39, 0, 40, 0, 0, 0, 0, 0, 43, 53, 0, 54, 0, 0, 0, 0, 47, 0, 0, 0, 0, 59, 50, 0, 0, 0, 52, 62, 53, 0, 54, 0, 0, 0, 56, 0, 0, 67, 58, 68, 0, 69, 0, 70, 61, 71, 62, 72, 63, 73, }
+{ 2, 1, 3, 3, 3, 2, 1, 3, 3, 1, 3, 2, 1, 3, 3, 2, 1, 1, 1, 3, 1, 3, 3, 1, 3, 3, 3, 1, 2, 1, 3, 1, 2, 3, 2, 3, 2, 2, 3, 3, 3, 2, 3, 0, 0, 0, 0, 0, }
+{ 1, 2, 3, 4, 5, 7, 8, 9, 11, 13, 14, 16, 20, 22, 23, 25, 27, 28, 29, 30, 34, 35, 36, 38, 40, 41, 42, 43, 44, 45, 48, 50, 51, 52, 53, 55, 57, 58, 59, 60, 61, 62, 63, 0, 0, 0, 0, 0, }
+{ 0, 1, 2, 4, 6, 8, 9, 10, 12, 14, 15, 17, 18, 19, 21, 23, 24, 25, 26, 27, 29, 30, 32, 34, 35, 37, 39, 41, 42, 43, 44, 46, 47, 48, 50, 51, 53, 54, 55, 57, 59, 61, 62, 0, 0, 0, 0, 0, }
+{42.0, 1.0, 11.0, 43.0, 2.0, 34.0, 12.0, 44.0, 45.0, 4.0, 14.0, 46.0, 15.0, 47.0, 16.0, 7.0, 39.0, 40.0, 10.0, 11.0, 43.0, 21.0, 53.0, 54.0, 23.0, 14.0, 24.0, 15.0, 47.0, 17.0, 27.0, 59.0, 18.0, 50.0, 19.0, 20.0, 52.0, 30.0, 62.0, 21.0, 53.0, 31.0, 54.0, 32.0, 24.0, 56.0, 25.0, 67.0, 26.0, 58.0, 68.0, 37.0, 69.0, 70.0, 61.0, 39.0, 71.0, 30.0, 62.0, 40.0, 72.0, 63.0, 41.0, 73.0, }
+*** [31merror[0m: [1] expected=0.000000, actual=42.000000
+*** [31merror[0m: [3] expected=11.000000, actual=43.000000
+*** [31merror[0m: [4] expected=2.000000, actual=34.000000
+*** [31merror[0m: [5] expected=12.000000, actual=44.000000
+*** [31merror[0m: [7] expected=0.000000, actual=45.000000
+*** [31merror[0m: [9] expected=14.000000, actual=46.000000
+*** [31merror[0m: [11] expected=15.000000, actual=47.000000
+*** [31merror[0m: [14] expected=7.000000, actual=39.000000
+*** [31merror[0m: [16] expected=0.000000, actual=40.000000
+*** [31merror[0m: [22] expected=11.000000, actual=43.000000
+*** [31merror[0m: [23] expected=21.000000, actual=53.000000
+*** [31merror[0m: [24] expected=0.000000, actual=18070120421771532304384.000000
+*** [31merror[0m: [25] expected=0.000000, actual=54.000000
+*** [31merror[0m: [30] expected=15.000000, actual=47.000000
+*** [31merror[0m: [35] expected=27.000000, actual=59.000000
+*** [31merror[0m: [36] expected=18.000000, actual=50.000000
+*** [31merror[0m: [40] expected=20.000000, actual=52.000000
+*** [31merror[0m: [41] expected=30.000000, actual=62.000000
+*** [31merror[0m: [42] expected=21.000000, actual=53.000000
+*** [31merror[0m: [44] expected=0.000000, actual=54.000000
+*** [31merror[0m: [48] expected=24.000000, actual=56.000000
+*** [31merror[0m: [51] expected=0.000000, actual=67.000000
+*** [31merror[0m: [52] expected=26.000000, actual=58.000000
+*** [31merror[0m: [53] expected=0.000000, actual=68.000000
+*** [31merror[0m: [55] expected=37.000000, actual=69.000000
+*** [31merror[0m: [57] expected=0.000000, actual=70.000000
+*** [31merror[0m: [58] expected=0.000000, actual=61.000000
+*** [31merror[0m: [59] expected=39.000000, actual=71.000000
+*** [31merror[0m: [60] expected=30.000000, actual=62.000000
+*** [31merror[0m: [61] expected=40.000000, actual=72.000000
+*** [31merror[0m: [62] expected=0.000000, actual=63.000000
+*** [31merror[0m: [63] expected=41.000000, actual=73.000000
+*** [31merror[0m: [65] expected=42.000000, actual=0.000000
+*** [31merror[0m: [66] expected=0.000000, actual=1.000000
+*** [31merror[0m: [67] expected=43.000000, actual=11.000000
+*** [31merror[0m: [68] expected=34.000000, actual=2.000000
+*** [31merror[0m: [69] expected=44.000000, actual=12.000000
+*** [31merror[0m: [71] expected=45.000000, actual=0.000000
+*** [31merror[0m: [72] expected=0.000000, actual=4.000000
+*** [31merror[0m: [73] expected=46.000000, actual=14.000000
+*** [31merror[0m: [75] expected=47.000000, actual=15.000000
+*** [31merror[0m: [77] expected=0.000000, actual=16.000000
+*** [31merror[0m: [78] expected=39.000000, actual=7.000000
+*** [31merror[0m: [80] expected=40.000000, actual=0.000000
+*** [31merror[0m: [make: Leaving directory '/vortex/build/tests/opencl/NickNet'
+Segmentation fault (core dumped)
+make: *** [../common.mk:104: run-simx] Error 139

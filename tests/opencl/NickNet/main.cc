@@ -51,7 +51,8 @@ template <uint32_t L> static TYPE **gen_weights(uint32_t *W) {
     for (uint32_t l = 0; l < L; l++) {
         out[l] = (float *)std::malloc(W[l] * sizeof(TYPE));
         for (uint32_t w = 0; w < W[l]; w++) {
-            out[l][w] = rand_float();
+            // out[l][w] = rand_float();
+            out[l][w] = 1;
         }
     }
     return out;
@@ -134,7 +135,7 @@ int main() {
 
     for (unsigned n = 0; n < N; n++) {
         for (int c = 0; c < _C; c++) {
-            h_in[n * _C + c] = rand() % 5 != 0 ? n * 10 + c : 0;
+            h_in[n * _C + c] = rand() % 2 != 0 ? c * 10 + n : 0;
         }
     }
     Sparse_block *input = compress(h_in, N, _C);
@@ -158,42 +159,46 @@ int main() {
         L0.get_output(output);
         printf("\033[33mTesting Network\033[0m\n");
     } else {
-        sconv(h_W, h_B, _K, _F, input, output);
-
-        printf("CPU values: {");
-        for (unsigned i = 0; i < (N + _K - 1); i++) {
-            if (h_out[i] != 0) {
-                printf("%f, ", h_out[i]);
+        TYPE decomp[_IN * _C];
+        decompress(decomp, N, _C, input);
+        print_arr(h_in, N * _C);
+        print_arr(input->mask, input->len);
+        print_arr(input->samples, input->len);
+        print_arr(input->ptx, input->len);
+        print_arr(input->data, input->size);
+        int errors = 0;
+        for (uint32_t i = 0; i < (N + _K - 1); ++i) {
+            if (!compare_equal(decomp[i], h_in[i])) {
+                if (errors < 100)
+                    printf("*** \033[31merror\033[0m: [%d] expected=%f, actual=%f\n", i,
+                           h_in[i], decomp[i]);
+                ++errors;
             }
         }
-        printf("\b\b}\n");
-        printf("SPARSE values: {");
-        for (unsigned i = 0; i < input->size; i++) {
-            if (output->data[i] != 0) {
-                printf("%f, ", output->data[i]);
-            }
+        if (errors != 0) {
+            printf("\033[31mFAILED! - %d errors\033[0m\n", errors);
+        } else {
+            printf("\033[32mPASSED!\033[0m\n");
         }
-        printf("\b\b}\n");
     }
     if (testing_gpu) {
         unsigned len_tmp, f_tmp;
         decompress(dev_out, len_tmp, f_tmp, output);
         int errors = 0;
         // IMPORTANT: The two printed arrays should contain the same numbers!
-        //  for (uint32_t i = 0; i < (N + _K - 1); ++i) {
-        //      if (!compare_equal(dev_out[i], h_out[i])) {
-        //          if (errors < 100)
-        //              printf("*** \033[31merror\033[0m: [%d] expected=%f, actual=%f\n",
-        //              i,
-        //                     h_out[i], dev_out[i]);
-        //          ++errors;
-        //      }
-        //  }
-        //  if (errors != 0) {
-        //      printf("\033[31mFAILED! - %d errors\033[0m\n", errors);
-        //  } else {
-        //      printf("\033[32mPASSED!\033[0m\n");
-        //  }
+        for (uint32_t i = 0; i < (N + _K - 1); ++i) {
+            if (!compare_equal(dev_out[i], h_out[i])) {
+                if (errors < 100)
+                    printf("*** \033[31merror\033[0m: [%d] expected=%f, actual=%f\n", i,
+                           h_out[i], dev_out[i]);
+                ++errors;
+            }
+        }
+        if (errors != 0) {
+            printf("\033[31mFAILED! - %d errors\033[0m\n", errors);
+        } else {
+            printf("\033[32mPASSED!\033[0m\n");
+        }
     }
 
     free_Sparse(input);

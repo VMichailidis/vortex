@@ -50,15 +50,16 @@ Sparse_block *compress(TYPE *arr, unsigned N, unsigned C) {
     block->C = C;
     block->len = samples;
     block->size = size;
+    unsigned ptr = 0;
     unsigned j = 0;
     unsigned i = 0;
     for (unsigned n = 0; n < N; n++) {
         unsigned mask = 0;
         bool occupied = false;
         for (unsigned c = 0; c < C; c++) {
-            if (arr[n * C + c] != 0) {
+            if (arr[c * N + n] != 0) {
                 occupied = true;
-                block->data[j] = arr[n * C + c];
+                block->data[j] = arr[c * N + n];
                 j++;
                 mask |= 1 << c;
             }
@@ -66,6 +67,8 @@ Sparse_block *compress(TYPE *arr, unsigned N, unsigned C) {
         if (occupied) {
             block->samples[i] = n;
             block->mask[i] = mask;
+            block->ptx[i] = ptr;
+            ptr += __builtin_popcount(mask);
             i++;
         }
     }
@@ -81,27 +84,40 @@ void accumulate_indexes(Sparse_block *sarr) {
     }
 }
 
-void decompress(TYPE *arr, unsigned &N, unsigned &C, Sparse_block *sarr) {
+void decompress(TYPE *arr, unsigned N, unsigned C, Sparse_block *sarr) {
     N = sarr->samples[sarr->len - 1];
     C = sarr->C;
-    unsigned ptx = 0;
-    unsigned idx = 0;
-    for (unsigned n = 0; n < N; n++) {
-        for (unsigned c = 0; c < C; c++) {
-            bool occupied = sarr->mask[idx] & 1 << c;
-            unsigned offset = __builtin_popcount(
-                ~(~0 << c) & sarr->mask[idx]); // find the position of channel c in val
-            if (occupied && n == sarr->samples[idx]) {
-                arr[n * C + c] = sarr->data[ptx + offset];
-            } else {
-                arr[n * C + c] = 0.0f;
-            }
-        }
-        if (n == sarr->samples[idx]) {
-            ptx += __builtin_popcount(sarr->mask[idx]);
-            idx += 1;
+    for (unsigned n = 0; n < N; n++)
+        for (unsigned c = 0; c < C; c++)
+            arr[c * N + n] = 0;
+
+    for (unsigned s = 0; s < sarr->len; s++) {
+        unsigned mask = sarr->mask[s];
+        unsigned ptx = sarr->ptx[s];
+        unsigned sample = sarr->samples[s];
+        while (mask) {
+            unsigned channel = __builtin_ffs(mask);
+            unsigned c = channel - 1;
+            unsigned offset = __builtin_popcount(~(~0 << c) & sarr->mask[s]);
+            arr[c * N + sample] = sarr->data[ptx + offset];
+            mask &= ~0 << channel;
         }
     }
+    // for (unsigned n = 0; n < N; n++) {
+    //     for (unsigned c = 0; c < C; c++) {
+    //         bool occupied = sarr->mask[idx] & 1 << c;
+    //         unsigned offset = __builtin_popcount(
+    //             ~(~0 << c) & sarr->mask[idx]); // find the position of channel c in val
+    //         if (occupied && n == sarr->samples[idx]) {
+    //             arr[c * N + n] = sarr->data[ptx + offset];
+    //         } else {
+    //             arr[c * N + n] = 0.0f;
+    //         }
+    //     }
+    //     if (n == sarr->samples[idx]) {
+    //         ptx += __builtin_popcount(sarr->mask[idx]);
+    //         idx += 1;
+    //     }
 }
 
 #endif
