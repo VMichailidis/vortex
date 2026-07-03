@@ -1,0 +1,5 @@
+[keys.normal]
+space.m = [":write-all", ":run-shell-command docker exec -i vortex-container /vortex/build/ci/blackbox.sh --cores=1 --app=conv1_sparse --threads=16 --warps=4 --l2cache --l3cache o+e>| save -f /home/basil/scratchpad/vortex-container/container/vortex/tests/opencl/conv1_sparse/out.fifo"]
+space.M = ":run-shell-command kitty --detach --hold --override input_delay=250 nu -c \"watch /home/basil/scratchpad/vortex-container/container/vortex/tests/opencl/conv1_sparse/out.fifo | each {clear; open /home/basil/scratchpad/vortex-container/container/vortex/tests/opencl/conv1_sparse/out.fifo | print}\""
+space.o = [":o /home/basil/scratchpad/vortex-container/container/vortex/tests/opencl/conv1_sparse/out.fifo"]
+space.K = [":run-shell-command docker exec -i vortex-container pkill NickNet"]

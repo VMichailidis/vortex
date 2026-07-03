@@ -1,0 +1,96 @@
+[
+  {
+    "arguments": [
+      "/usr/bin/g++",
+      "-std=c++17",
+      "-Wall",
+      "-Wextra",
+      "-Wfatal-errors",
+      "-Wno-deprecated-declarations",
+      "-Wno-unused-parameter",
+      "-Wno-narrowing",
+      "-pthread",
+      "-I/root/tools/pocl/include",
+      "-I/root/tools/pocl/include/CL/opencl.h",
+      "-O2",
+      "-DNDEBUG",
+      "-c",
+      "-o",
+      "main.cc.o",
+      "/vortex/tests/opencl/sparse/main.cc"
+    ],
+    "directory": "/vortex/build/tests/opencl/sparse",
+    "file": "/vortex/tests/opencl/sparse/main.cc",
+    "output": "/vortex/build/tests/opencl/sparse/main.cc.o"
+  },
+  {
+    "arguments": [
+      "/usr/bin/g++",
+      "-std=c++17",
+      "-Wall",
+      "-Wextra",
+      "-Wfatal-errors",
+      "-Wno-deprecated-declarations",
+      "-Wno-unused-parameter",
+      "-Wno-narrowing",
+      "-pthread",
+      "-I/root/tools/pocl/include",
+      "-I/root/tools/pocl/include/CL/opencl.h",
+      "-O2",
+      "-DNDEBUG",
+      "-c",
+      "-o",
+      "main.cc.o",
+      "/vortex/tests/opencl/sparse/main.cc"
+    ],
+    "directory": "/vortex/build/tests/opencl/sparse",
+    "file": "/vortex/tests/opencl/sparse/Convolution.hpp",
+    "output": "/vortex/build/tests/opencl/sparse/main.cc.o"
+  },{
+    "arguments": [
+      "/usr/bin/g++",
+      "-std=c++17",
+      "-Wall",
+      "-Wextra",
+      "-Wfatal-errors",
+      "-Wno-deprecated-declarations",
+      "-Wno-unused-parameter",
+      "-Wno-narrowing",
+      "-pthread",
+      "-I/root/tools/pocl/include",
+      "-I/root/tools/pocl/include/CL/opencl.h",
+      "-O2",
+      "-DNDEBUG",
+      "-c",
+      "-o",
+      "main.cc.o",
+      "/vortex/tests/opencl/sparse/main.cc"
+    ],
+    "directory": "/vortex/build/tests/opencl/sparse",
+    "file": "/vortex/tests/opencl/sparse/Layer.hpp",
+    "output": "/vortex/build/tests/opencl/sparse/main.cc.o"
+  },{
+    "arguments": [
+      "/usr/bin/g++",
+      "-std=c++17",
+      "-Wall",
+      "-Wextra",
+      "-Wfatal-errors",
+      "-Wno-deprecated-declarations",
+      "-Wno-unused-parameter",
+      "-Wno-narrowing",
+      "-pthread",
+      "-I/root/tools/pocl/include",
+      "-I/root/tools/pocl/include/CL/opencl.h",
+      "-O2",
+      "-DNDEBUG",
+      "-c",
+      "-o",
+      "main.cc.o",
+      "/vortex/tests/opencl/sparse/main.cc"
+    ],
+    "directory": "/vortex/build/tests/opencl/sparse",
+    "file": "/vortex/tests/opencl/sparse/Network.hpp",
+    "output": "/vortex/build/tests/opencl/sparse/main.cc.o"
+  },
+]
