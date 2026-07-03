@@ -82,6 +82,9 @@ OBJS := $(addsuffix .o, $(notdir $(SRCS)))
 
 all: $(PROJECT)
 
+main.cc.o: $(SRC_DIR)/main.cc $(SRC_DIR)/*.h $(SRC_DIR)/*.hpp $(KERNEL_SRCS)
+	$(CXX) $(CXXFLAGS) -c $< -o $@
+
 %.cc.o: $(SRC_DIR)/%.cc $(SRC_DIR)/*.h $(SRC_DIR)/*.hpp $(KERNEL_SRCS)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 

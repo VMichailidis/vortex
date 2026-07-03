@@ -1,12 +1,12 @@
 #ifndef TYPE
 #define TYPE float
 #endif
-__kernel void conv1(__global TYPE *I, // [Num Channels, Seq Length]
-                    __global TYPE *W, // [Num Filters, Num Channels, K]
-                    __global TYPE *B, // [Num Filters]
-                    __global TYPE *O, // [Num Filters, Out Len]
-                    const int SeqLength, const int K, const int Stride,
-                    const int NumChannels, const int NumFilters) {
+__kernel void conv_relu(__global TYPE *I, // [Num Channels, Seq Length]
+                        __global TYPE *W, // [Num Filters, Num Channels, K]
+                        __global TYPE *B, // [Num Filters]
+                        __global TYPE *O, // [Num Filters, Out Len]
+                        const int SeqLength, const int K, const int Stride,
+                        const int NumChannels, const int NumFilters) {
     int f = get_global_id(0); // filter
     int t = get_global_id(1); // timestamp
 
