@@ -17,7 +17,7 @@
 #define FLOAT_ULP 6
 
 #define KERNEL_NAME "conv1"
-#define _IN 1024
+#define _IN 8206
 // #define _K 5
 // #define _C 2
 // #define _OUT (_IN - _K + 1)
@@ -107,6 +107,9 @@ int main() {
                                      &h_B);
 
     std::vector<TYPE> h_i(_IN * _C0);
+    TYPE *sample = weights_io::load_input_channels_first("model/X_test.bin", 0, _IN, _C0);
+    std::copy(sample, sample + _IN * _C0, h_i.begin());
+    std::free(sample);
     std::vector<TYPE> h_o(_OUT2 * _F, 0.0f);
     std::vector<TYPE> ref_vec(_OUT2 * _F, 0.0f);
     // Generate input values

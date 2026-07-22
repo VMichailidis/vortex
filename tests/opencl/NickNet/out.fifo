@@ -23,9 +23,9 @@ In file included from [01m[K/vortex/tests/opencl/NickNet/Convolution.hpp:8[m
       |                            [01;35m[K|[m[K                                 [32m[K|[m[K
       |                            [01;35m[Kint[m[K                               [32m[Klong unsigned int[m[K
       |                           [32m[K%ld[m[K
-/vortex/tests/opencl/NickNet/Convolution.hpp: In instantiation of '[01m[K_cl_event* Convolution<T, IN, K, C, F>::[01;32m[Krun[m[K() [35m[K[with T = float; unsigned int IN = 1024; unsigned int K = 15; unsigned int C = 2; unsigned int F = 16; cl_event = _cl_event*][m[K[m[K':
-[01m[K/vortex/tests/opencl/NickNet/Network.hpp:49:16:[m[K   required from '[01m[Kvoid Network<T, IN, K0, C0, K1, C1, K2, C2, F>::[01;32m[Krun[m[K() [35m[K[with T = float; unsigned int IN = 1024; unsigned int K0 = 15; unsigned int C0 = 2; unsigned int K1 = 1; unsigned int C1 = 16; unsigned int K2 = 1; unsigned int C2 = 16; unsigned int F = 2][m[K[m[K'
-[01m[K/vortex/tests/opencl/NickNet/main.cc:126:12:[m[K   required from here
+/vortex/tests/opencl/NickNet/Convolution.hpp: In instantiation of '[01m[K_cl_event* Convolution<T, IN, K, C, F>::[01;32m[Krun[m[K() [35m[K[with T = float; unsigned int IN = 8206; unsigned int K = 15; unsigned int C = 2; unsigned int F = 16; cl_event = _cl_event*][m[K[m[K':
+[01m[K/vortex/tests/opencl/NickNet/Network.hpp:49:16:[m[K   required from '[01m[Kvoid Network<T, IN, K0, C0, K1, C1, K2, C2, F>::[01;32m[Krun[m[K() [35m[K[with T = float; unsigned int IN = 8206; unsigned int K0 = 15; unsigned int C0 = 2; unsigned int K1 = 1; unsigned int C1 = 16; unsigned int K2 = 1; unsigned int C2 = 16; unsigned int F = 2][m[K[m[K'
+[01m[K/vortex/tests/opencl/NickNet/main.cc:129:12:[m[K   required from here
 [01m[K/vortex/tests/opencl/NickNet/Convolution.hpp:120:71:[m[K [01;35m[Kwarning: [m[Kformat '[01m[K%d[m[K' expects argument of type '[01m[Kint[m[K', but argument 2 has type '[01m[Klong unsigned int[m[K' [[01;35m[K-Wformat=[m[K]
   120 |             printf("\033[31mError:\033[0m Requested work group size ([01;35m[K%d[m[K) is greater than "
       |                                                                      [01;35m[K~^[m[K
@@ -47,9 +47,9 @@ In file included from [01m[K/vortex/tests/opencl/NickNet/Convolution.hpp:8[m
       |                                                   [32m[K~~~~~~~~[m[K
       |                                                   [32m[K|[m[K
       |                                                   [32m[Ksize_t {aka long unsigned int}[m[K
-/vortex/tests/opencl/NickNet/Convolution.hpp: In instantiation of '[01m[K_cl_event* Convolution<T, IN, K, C, F>::[01;32m[Krun[m[K() [35m[K[with T = float; unsigned int IN = 1010; unsigned int K = 1; unsigned int C = 16; unsigned int F = 16; cl_event = _cl_event*][m[K[m[K':
-[01m[K/vortex/tests/opencl/NickNet/Network.hpp:50:16:[m[K   required from '[01m[Kvoid Network<T, IN, K0, C0, K1, C1, K2, C2, F>::[01;32m[Krun[m[K() [35m[K[with T = float; unsigned int IN = 1024; unsigned int K0 = 15; unsigned int C0 = 2; unsigned int K1 = 1; unsigned int C1 = 16; unsigned int K2 = 1; unsigned int C2 = 16; unsigned int F = 2][m[K[m[K'
-[01m[K/vortex/tests/opencl/NickNet/main.cc:126:12:[m[K   required from here
+/vortex/tests/opencl/NickNet/Convolution.hpp: In instantiation of '[01m[K_cl_event* Convolution<T, IN, K, C, F>::[01;32m[Krun[m[K() [35m[K[with T = float; unsigned int IN = 8192; unsigned int K = 1; unsigned int C = 16; unsigned int F = 16; cl_event = _cl_event*][m[K[m[K':
+[01m[K/vortex/tests/opencl/NickNet/Network.hpp:50:16:[m[K   required from '[01m[Kvoid Network<T, IN, K0, C0, K1, C1, K2, C2, F>::[01;32m[Krun[m[K() [35m[K[with T = float; unsigned int IN = 8206; unsigned int K0 = 15; unsigned int C0 = 2; unsigned int K1 = 1; unsigned int C1 = 16; unsigned int K2 = 1; unsigned int C2 = 16; unsigned int F = 2][m[K[m[K'
+[01m[K/vortex/tests/opencl/NickNet/main.cc:129:12:[m[K   required from here
 [01m[K/vortex/tests/opencl/NickNet/Convolution.hpp:120:71:[m[K [01;35m[Kwarning: [m[Kformat '[01m[K%d[m[K' expects argument of type '[01m[Kint[m[K', but argument 2 has type '[01m[Klong unsigned int[m[K' [[01;35m[K-Wformat=[m[K]
   120 |             printf("\033[31mError:\033[0m Requested work group size ([01;35m[K%d[m[K) is greater than "
       |                                                                      [01;35m[K~^[m[K
@@ -71,9 +71,9 @@ In file included from [01m[K/vortex/tests/opencl/NickNet/Convolution.hpp:8[m
       |                                                   [32m[K~~~~~~~~[m[K
       |                                                   [32m[K|[m[K
       |                                                   [32m[Ksize_t {aka long unsigned int}[m[K
-/vortex/tests/opencl/NickNet/Convolution.hpp: In instantiation of '[01m[K_cl_event* Convolution<T, IN, K, C, F>::[01;32m[Krun[m[K() [35m[K[with T = float; unsigned int IN = 1010; unsigned int K = 1; unsigned int C = 16; unsigned int F = 2; cl_event = _cl_event*][m[K[m[K':
-[01m[K/vortex/tests/opencl/NickNet/Network.hpp:51:16:[m[K   required from '[01m[Kvoid Network<T, IN, K0, C0, K1, C1, K2, C2, F>::[01;32m[Krun[m[K() [35m[K[with T = float; unsigned int IN = 1024; unsigned int K0 = 15; unsigned int C0 = 2; unsigned int K1 = 1; unsigned int C1 = 16; unsigned int K2 = 1; unsigned int C2 = 16; unsigned int F = 2][m[K[m[K'
-[01m[K/vortex/tests/opencl/NickNet/main.cc:126:12:[m[K   required from here
+/vortex/tests/opencl/NickNet/Convolution.hpp: In instantiation of '[01m[K_cl_event* Convolution<T, IN, K, C, F>::[01;32m[Krun[m[K() [35m[K[with T = float; unsigned int IN = 8192; unsigned int K = 1; unsigned int C = 16; unsigned int F = 2; cl_event = _cl_event*][m[K[m[K':
+[01m[K/vortex/tests/opencl/NickNet/Network.hpp:51:16:[m[K   required from '[01m[Kvoid Network<T, IN, K0, C0, K1, C1, K2, C2, F>::[01;32m[Krun[m[K() [35m[K[with T = float; unsigned int IN = 8206; unsigned int K0 = 15; unsigned int C0 = 2; unsigned int K1 = 1; unsigned int C1 = 16; unsigned int K2 = 1; unsigned int C2 = 16; unsigned int F = 2][m[K[m[K'
+[01m[K/vortex/tests/opencl/NickNet/main.cc:129:12:[m[K   required from here
 [01m[K/vortex/tests/opencl/NickNet/Convolution.hpp:120:71:[m[K [01;35m[Kwarning: [m[Kformat '[01m[K%d[m[K' expects argument of type '[01m[Kint[m[K', but argument 2 has type '[01m[Klong unsigned int[m[K' [[01;35m[K-Wformat=[m[K]
   120 |             printf("\033[31mError:\033[0m Requested work group size ([01;35m[K%d[m[K) is greater than "
       |                                                                      [01;35m[K~^[m[K
@@ -103,11 +103,7 @@ Create program from kernel source
 Initializing network
 Running Network on device
 Running network simulation
-*** error: [25] expected=-0.678467, actual=-0.678465
-*** error: [93] expected=0.251598, actual=0.251600
-*** error: [890] expected=-0.667460, actual=-0.667461
-*** error: [932] expected=0.035519, actual=0.035518
-[31mFAILED! - 4 errors, 2016 correct[0m
+[32mPASSED![0m
 Device Info:
 	Max Compute Units: 1
 	Max Work Item Dimensions: 3
@@ -122,5 +118,5 @@ Releasing kernel
 Releasing kernel
 Releasing context
 Releasing device_id
-PERF: instrs=629134, cycles=132297, IPC=4.755467
+PERF: instrs=4930130, cycles=962281, IPC=5.123379
 make: Leaving directory '/vortex/build/tests/opencl/NickNet'
