@@ -72,7 +72,7 @@ static void convolution_cpu(TYPE *I,   // [SeqLength, NumChannels]
                     acc += I[(t + k) * C + c] * W[f * C * K + c * K + k];
                 }
             }
-            O[f * OUT + t] = acc;
+            O[t * F + f] = acc;
         }
     }
 }

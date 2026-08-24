@@ -72,7 +72,7 @@ __kernel void conv1(__global TYPE *I, // [Num Channels, Seq Length]
     TYPE result = conv_no_cache(I, W, B, O, IN, K, C, F, f, t);
     if (f >= F || t >= OUT)
         return;
-    O[f * OUT + t] = result;
+    O[F * t + f] = result;
 }
 __kernel void conv1_relu(__global TYPE *I, // [Num Channels, Seq Length]
                          __global TYPE *W, // [Num Filters, Num Channels, K]
@@ -87,5 +87,5 @@ __kernel void conv1_relu(__global TYPE *I, // [Num Channels, Seq Length]
     TYPE result = conv_no_cache(I, W, B, O, IN, K, C, F, f, t);
     if (f >= F || t >= OUT)
         return;
-    O[f * OUT + t] = result > 0.0f ? result : 0.0f;
+    O[F * t + f] = result > 0.0f ? result : 0.0f;
 }
