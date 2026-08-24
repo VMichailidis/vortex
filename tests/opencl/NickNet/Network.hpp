@@ -12,24 +12,24 @@
 #include <vector>
 // KCF
 template <typename T, unsigned IN, unsigned K0, unsigned C0, unsigned K1, unsigned C1,
-          unsigned K2, unsigned C2, unsigned F>
+          unsigned K2, unsigned C2, unsigned F, unsigned B>
 class Network {
   public:
     static const unsigned OUT0 = IN - K0 + 1;
     static const unsigned OUT1 = OUT0 - K1 + 1;
     static const unsigned OUT2 = OUT1 - K2 + 1;
 
-    Convolution<T, IN, K0, C0, C1> *c0;
-    Convolution<T, OUT0, K1, C1, C2> *c1;
-    Convolution<T, OUT1, K2, C2, F> *c2;
+    Convolution<T, IN, K0, C0, C1, B> *c0;
+    Convolution<T, OUT0, K1, C1, C2, B> *c1;
+    Convolution<T, OUT1, K2, C2, F, B> *c2;
 
     Device *dev;
     cl_int cl_err;
 
     Network(Device &dev_h, cl_mem input = NULL) {
-        c0 = new Convolution<T, IN, K0, C0, C1>(dev_h, "conv1_relu");
-        c1 = new Convolution<T, OUT0, K1, C1, C2>(dev_h, "conv1_relu", c0->port_out);
-        c2 = new Convolution<T, OUT1, K2, C2, F>(dev_h, "conv1", c1->port_out);
+        c0 = new Convolution<T, IN, K0, C0, C1, B>(dev_h, "conv1_relu");
+        c1 = new Convolution<T, OUT0, K1, C1, C2, B>(dev_h, "conv1_relu", c0->port_out);
+        c2 = new Convolution<T, OUT1, K2, C2, F, B>(dev_h, "conv1", c1->port_out);
     }
     ~Network() {
         delete c2;

@@ -18,6 +18,7 @@
 
 #define KERNEL_NAME "conv1"
 #define _IN 8206
+#define _BATCH 16
 // #define _K 5
 // #define _C 2
 // #define _OUT (_IN - _K + 1)
@@ -57,22 +58,24 @@ template <uint32_t L> static TYPE **gen_weights(uint32_t *W) {
     return out;
 }
 
-template <typename T, uint32_t IN, uint32_t K, uint32_t C, uint32_t F>
+template <typename T, uint32_t IN, uint32_t K, uint32_t C, uint32_t F, uint32_t BATCHES>
 static void convolution_cpu(TYPE *I,   // [SeqLength, NumChannels]
                             TYPE *W,   // [NumFilters, NumChannels, K]
                             TYPE *B,   // [NumFilters]
                             TYPE *O) { // [NumFilters, OutLen]
     const unsigned OUT = IN - K + 1;
+    for (uint32_t b = 0; b < BATCHES; b++) {
 
-    for (uint32_t f = 0; f < F; f++) {
-        for (uint32_t t = 0; t < OUT; t++) {
-            TYPE acc = B[f];
-            for (uint32_t c = 0; c < C; c++) {
-                for (uint32_t k = 0; k < K; k++) {
-                    acc += I[(t + k) * C + c] * W[f * C * K + c * K + k];
+        for (uint32_t f = 0; f < F; f++) {
+            for (uint32_t t = 0; t < OUT; t++) {
+                TYPE acc = B[f];
+                for (uint32_t c = 0; c < C; c++) {
+                    for (uint32_t k = 0; k < K; k++) {
+                        acc += I[b * IN * C + (t + k) * C + c] * W[f * C * K + c * K + k];
+                    }
                 }
+                O[b * OUT * F + t * F + f] = acc;
             }
-            O[t * F + f] = acc;
         }
     }
 }
@@ -82,23 +85,23 @@ template <unsigned N> static void relu_cpu(TYPE *I) {
     }
 }
 template <typename T, unsigned IN, unsigned K0, unsigned C0, unsigned K1, unsigned C1,
-          unsigned K2, unsigned C2, unsigned F>
+          unsigned K2, unsigned C2, unsigned F, unsigned BATCHES>
 static void nick_net_cpu(T *I, T **W, T **B, T *O) {
     static const unsigned OUT0 = IN - K0 + 1;
     static const unsigned OUT1 = OUT0 - K1 + 1;
-    T *O0 = (T *)std::malloc(OUT0 * C1 * sizeof(T));
-    T *O1 = (T *)std::malloc(OUT1 * C2 * sizeof(T));
-    convolution_cpu<T, IN, K0, C0, C1>(I, W[0], B[0], O0);
-    relu_cpu<OUT0 * C1>(O0);
-    convolution_cpu<T, OUT0, K1, C1, C2>(O0, W[1], B[1], O1);
-    relu_cpu<OUT1 * C2>(O1);
-    convolution_cpu<T, OUT1, K2, C2, F>(O1, W[2], B[2], O);
+    T *O0 = (T *)std::malloc(BATCHES * OUT0 * C1 * sizeof(T));
+    T *O1 = (T *)std::malloc(BATCHES * OUT1 * C2 * sizeof(T));
+    convolution_cpu<T, IN, K0, C0, C1, BATCHES>(I, W[0], B[0], O0);
+    relu_cpu<OUT0 * C1 * BATCHES>(O0);
+    convolution_cpu<T, OUT0, K1, C1, C2, BATCHES>(O0, W[1], B[1], O1);
+    relu_cpu<OUT1 * C2 * BATCHES>(O1);
+    convolution_cpu<T, OUT1, K2, C2, F, BATCHES>(O1, W[2], B[2], O);
     std::free(O0);
     std::free(O1);
 }
 
 int main() {
-    uint32_t weight_dims[3] = {_K0 * _C1 * _C0, _K1 * _C2 * _C1, _K2 * _F * _C2};
+    // uint32_t weight_dims[3] = {_K0 * _C1 * _C0, _K1 * _C2 * _C1, _K2 * _F * _C2};
     // TYPE **h_W = gen_weights<3>(weight_dims);
     // uint32_t bias_dims[3] = {_C1, _C2, _F};
     // TYPE **h_B = gen_weights<3>(bias_dims);
@@ -106,12 +109,12 @@ int main() {
     weights_io::load_sic_cnn_weights("model", _K0, _C0, _C1, _K1, _C2, _K2, _F, &h_W,
                                      &h_B);
 
-    std::vector<TYPE> h_i(_IN * _C0);
-    TYPE *sample = weights_io::load_input("model/X_test.bin", 0, _IN, _C0);
-    std::copy(sample, sample + _IN * _C0, h_i.begin());
-    std::free(sample);
-    std::vector<TYPE> h_o(_OUT2 * _F, 0.0f);
-    std::vector<TYPE> ref_vec(_OUT2 * _F, 0.0f);
+    std::vector<TYPE> h_i(_BATCH * _IN * _C0);
+    TYPE *samples = weights_io::load_input("model/X_test.bin", _BATCH, _IN, _C0);
+    std::copy(samples, samples + _IN * _C0 * _BATCH, h_i.begin());
+    std::free(samples);
+    std::vector<TYPE> h_o(_BATCH * _OUT2 * _F, 0.0f);
+    std::vector<TYPE> ref_vec(_BATCH * _OUT2 * _F, 0.0f);
     // Generate input values
     auto rand_float = []() { return (static_cast<float>(rand()) / RAND_MAX) - 0.5f; };
     for (int32_t i = 0; i < _IN * _C0; i++) {
@@ -121,7 +124,7 @@ int main() {
     Device dev;
 
     printf("Initializing network\n");
-    Network<TYPE, _IN, _K0, _C0, _K1, _C1, _K2, _C2, _F> Net(dev);
+    Network<TYPE, _IN, _K0, _C0, _K1, _C1, _K2, _C2, _F, _BATCH> Net(dev);
 
     printf("Running Network on device\n");
     Net.load_weights(h_W, h_B);
@@ -140,12 +143,12 @@ int main() {
 #endif
 
     printf("Running network simulation\n");
-    nick_net_cpu<TYPE, _IN, _K0, _C0, _K1, _C1, _K2, _C2, _F>(h_i.data(), h_W, h_B,
-                                                              ref_vec.data());
+    nick_net_cpu<TYPE, _IN, _K0, _C0, _K1, _C1, _K2, _C2, _F, _BATCH>(
+        h_i.data(), h_W, h_B, ref_vec.data());
 
     int errors = 0;
     int correct = 0;
-    for (uint32_t i = 0; i < _OUT2 * _F; ++i) {
+    for (uint32_t i = 0; i < _BATCH * _OUT2 * _F; ++i) {
         if (!compare_equal(h_o[i], ref_vec[i])) {
             if (errors < 100)
                 printf("*** error: [%d] expected=%f, actual=%f\n", i, ref_vec[i], h_o[i]);

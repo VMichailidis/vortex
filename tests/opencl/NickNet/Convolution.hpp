@@ -12,13 +12,15 @@
 // Input: C channels of IN samples
 // Output: F channels of IN - K + 1 samples
 // Parameters: K: kernel size
-template <typename T, uint32_t IN, uint32_t K, uint32_t C, uint32_t F> class Convolution {
+template <typename T, uint32_t IN, uint32_t K, uint32_t C, uint32_t F, uint32_t B>
+class Convolution {
   private:
     // Required to pass template params to kernel
     uint32_t in = IN;
     uint32_t k = K;
     uint32_t c = C;
     uint32_t f = F;
+    uint32_t b = B;
 
   public:
     const unsigned OUT = IN - K + 1;
@@ -26,8 +28,8 @@ template <typename T, uint32_t IN, uint32_t K, uint32_t C, uint32_t F> class Con
     cl_mem w_memobj = NULL;
     cl_mem b_memobj = NULL;
     cl_mem port_out = NULL;
-    uint32_t o_points = F * OUT;
-    uint32_t i_points = C * IN;
+    uint32_t o_points = B * F * OUT;
+    uint32_t i_points = B * C * IN;
     uint32_t w_points = F * C * K;
     uint32_t b_points = F;
     size_t i_nbytes;
@@ -43,8 +45,8 @@ template <typename T, uint32_t IN, uint32_t K, uint32_t C, uint32_t F> class Con
     const size_t y_size = 64;
     const size_t OUT_l = ((OUT + y_size - 1) / y_size) * y_size;
     const size_t F_l = ((F + x_size - 1) / x_size) * x_size;
-    const size_t global_size[2] = {F_l, OUT_l};
-    const size_t local_size[2] = {x_size, y_size};
+    const size_t global_size[3] = {F_l, OUT_l, b};
+    const size_t local_size[3] = {x_size, y_size, 1};
 
     Convolution(Device &dev_h, const char *kernel_name, cl_mem input = NULL) {
         // OPTIMIZATION LOG:
@@ -86,6 +88,7 @@ template <typename T, uint32_t IN, uint32_t K, uint32_t C, uint32_t F> class Con
         CL_CHECK(clSetKernelArg(kernel, 5, sizeof(uint32_t), &k));
         CL_CHECK(clSetKernelArg(kernel, 6, sizeof(uint32_t), &c));
         CL_CHECK(clSetKernelArg(kernel, 7, sizeof(uint32_t), &f));
+        CL_CHECK(clSetKernelArg(kernel, 8, sizeof(uint32_t), &b));
         // Creating command queue
         q = dev_h.q;
     }
@@ -116,15 +119,15 @@ template <typename T, uint32_t IN, uint32_t K, uint32_t C, uint32_t F> class Con
     cl_event run() {
         cl_event target;
         size_t max_size = dev->max_work_group_sizes();
-        if (local_size[0] * local_size[1] > max_size) {
+        if (local_size[0] * local_size[1] * local_size[2] > max_size) {
             printf("\033[31mError:\033[0m Requested work group size (%d) is greater than "
                    "maximum work "
                    "group "
                    "size (%d)\n",
-                   local_size[0] * local_size[1], max_size);
+                   local_size[0] * local_size[1] * local_size[2], max_size);
             exit(-1);
         }
-        CL_CHECK(clEnqueueNDRangeKernel(q, kernel, 2, NULL, global_size, local_size, 0,
+        CL_CHECK(clEnqueueNDRangeKernel(q, kernel, 3, NULL, global_size, local_size, 0,
                                         NULL, NULL));
         return target;
     }

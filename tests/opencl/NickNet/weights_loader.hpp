@@ -118,11 +118,10 @@ inline void free_sic_cnn_weights(TYPE **W, TYPE **B) {
 // (e.g. data/X_test.bin, shape [batch, seq_len, channels]) and transposes it
 // into the channel-first [channels, seq_len] layout convolution_cpu expects.
 // `sample_idx` selects which of the `batch` sequences to load.
-inline TYPE *load_input(const std::string &path, uint32_t sample_idx, uint32_t seq_len,
+inline TYPE *load_input(const std::string &path, uint32_t samples, uint32_t seq_len,
                         uint32_t channels) {
-    size_t offset = (size_t)sample_idx * seq_len * channels;
-    TYPE *raw =
-        read_raw_f32(path, (size_t)seq_len * channels, offset); // [IN, C], c fastest
+    TYPE *raw = read_raw_f32(path, (size_t)seq_len * channels *
+                                       samples); // [BATCH, IN, C], c fastest
 
     return raw;
 }
