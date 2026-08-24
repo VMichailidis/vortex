@@ -52,7 +52,7 @@ TYPE conv_no_cache(__global TYPE *I, // [Num Channels, Seq Length]
     TYPE acc = B[f];
     for (int c = 0; c < C; c++) {
         for (int k = 0; k < K; k++) {
-            acc += I[c * IN + t + k] * W[f * C * K + c * K + k];
+            acc += I[(t + k) * C + c] * W[f * C * K + c * K + k];
         }
     }
     return acc;

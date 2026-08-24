@@ -2,14 +2,106 @@ CONFIGS=-DNUM_CORES=1 -DNUM_THREADS=16 -DNUM_WARPS=4 -DL2_ENABLE -DL3_ENABLE
 Running: CONFIGS="-DNUM_CORES=1 -DNUM_THREADS=16 -DNUM_WARPS=4 -DL2_ENABLE -DL3_ENABLE" make -C /vortex/build/ci/../runtime/simx > /dev/null
 Running: make -C "/vortex/build/ci/../tests/opencl/NickNet" run-simx
 make: Entering directory '/vortex/build/tests/opencl/NickNet'
+g++ -fdiagnostics-color=always  -std=c++17 -Wall -Wextra -Wfatal-errors -Wno-deprecated-declarations -Wno-unused-parameter -Wno-narrowing -pthread -I/root/tools/pocl/include  -O2 -DNDEBUG -MM /vortex/tests/opencl/NickNet/main.cc > .depend;
+g++ -fdiagnostics-color=always  -std=c++17 -Wall -Wextra -Wfatal-errors -Wno-deprecated-declarations -Wno-unused-parameter -Wno-narrowing -pthread -I/root/tools/pocl/include  -O2 -DNDEBUG -c /vortex/tests/opencl/NickNet/main.cc -o main.cc.o
+In file included from [01m[K/root/tools/pocl/include/CL/cl.h:20[m[K,
+                 from [01m[K/vortex/tests/opencl/NickNet/main.cc:1[m[K:
+[01m[K/root/tools/pocl/include/CL/cl_version.h:22:104:[m[K [01;36m[Knote: [m[K'[01m[K#pragma message: cl_version.h: CL_TARGET_OPENCL_VERSION is not defined. Defaulting to 300 (OpenCL 3.0)[m[K'
+   22 | #pragma message("cl_version.h: CL_TARGET_OPENCL_VERSION is not defined. Defaulting to 300 (OpenCL 3.0)"[01;36m[K)[m[K
+      |                                                                                                        [01;36m[K^[m[K
+[01m[K/vortex/tests/opencl/NickNet/main.cc:[m[K In function '[01m[Kint[01;32m[K main[m[K()[m[K':
+[01m[K/vortex/tests/opencl/NickNet/main.cc:101:14:[m[K [01;35m[Kwarning: [m[Kunused variable '[01m[Kweight_dims[m[K' [[01;35m[K-Wunused-variable[m[K]
+  101 |     uint32_t [01;35m[Kweight_dims[m[K[3] = {_K0 * _C1 * _C0, _K1 * _C2 * _C1, _K2 * _F * _C2};
+      |              [01;35m[K^~~~~~~~~~~[m[K
+In file included from [01m[K/vortex/tests/opencl/NickNet/Convolution.hpp:8[m[K,
+                 from [01m[K/vortex/tests/opencl/NickNet/main.cc:2[m[K:
+/vortex/tests/opencl/NickNet/Device.hpp: In instantiation of '[01m[KT Device::[01;32m[Kget_param[m[K(cl_device_info, bool, const char*) [35m[K[with T = long unsigned int; cl_device_info = unsigned int][m[K[m[K':
+[01m[K/vortex/tests/opencl/NickNet/Device.hpp:144:28:[m[K   required from here
+[01m[K/vortex/tests/opencl/NickNet/Device.hpp:106:28:[m[K [01;35m[Kwarning: [m[Kformat '[01m[K%d[m[K' expects argument of type '[01m[Kint[m[K', but argument 4 has type '[01m[Klong unsigned int[m[K' [[01;35m[K-Wformat=[m[K]
+  106 |             printf("%s%s: [01;35m[K%d[m[K\n", prefix, get_cl_name(param), [32m[Kret[m[K);
+      |                           [01;35m[K~^[m[K                                 [32m[K~~~[m[K
+      |                            [01;35m[K|[m[K                                 [32m[K|[m[K
+      |                            [01;35m[Kint[m[K                               [32m[Klong unsigned int[m[K
+      |                           [32m[K%ld[m[K
+/vortex/tests/opencl/NickNet/Convolution.hpp: In instantiation of '[01m[K_cl_event* Convolution<T, IN, K, C, F>::[01;32m[Krun[m[K() [35m[K[with T = float; unsigned int IN = 8206; unsigned int K = 15; unsigned int C = 2; unsigned int F = 16; cl_event = _cl_event*][m[K[m[K':
+[01m[K/vortex/tests/opencl/NickNet/Network.hpp:49:16:[m[K   required from '[01m[Kvoid Network<T, IN, K0, C0, K1, C1, K2, C2, F>::[01;32m[Krun[m[K() [35m[K[with T = float; unsigned int IN = 8206; unsigned int K0 = 15; unsigned int C0 = 2; unsigned int K1 = 1; unsigned int C1 = 16; unsigned int K2 = 1; unsigned int C2 = 16; unsigned int F = 2][m[K[m[K'
+[01m[K/vortex/tests/opencl/NickNet/main.cc:129:12:[m[K   required from here
+[01m[K/vortex/tests/opencl/NickNet/Convolution.hpp:120:71:[m[K [01;35m[Kwarning: [m[Kformat '[01m[K%d[m[K' expects argument of type '[01m[Kint[m[K', but argument 2 has type '[01m[Klong unsigned int[m[K' [[01;35m[K-Wformat=[m[K]
+  120 |             printf("\033[31mError:\033[0m Requested work group size ([01;35m[K%d[m[K) is greater than "
+      |                                                                      [01;35m[K~^[m[K
+      |                                                                       [01;35m[K|[m[K
+      |                                                                       [01;35m[Kint[m[K
+      |                                                                      [32m[K%ld[m[K
+......
+  124 |                    [32m[Klocal_size[0] * local_size[1][m[K, max_size);
+      |                    [32m[K~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[m[K                       
+      |                                  [32m[K|[m[K
+      |                                  [32m[Klong unsigned int[m[K
+[01m[K/vortex/tests/opencl/NickNet/Convolution.hpp:123:28:[m[K [01;35m[Kwarning: [m[Kformat '[01m[K%d[m[K' expects argument of type '[01m[Kint[m[K', but argument 3 has type '[01m[Ksize_t[m[K' {aka '[01m[Klong unsigned int[m[K'} [[01;35m[K-Wformat=[m[K]
+  123 |                    "size ([01;35m[K%d[m[K)\n",
+      |                           [01;35m[K~^[m[K
+      |                            [01;35m[K|[m[K
+      |                            [01;35m[Kint[m[K
+      |                           [32m[K%ld[m[K
+  124 |                    local_size[0] * local_size[1], [32m[Kmax_size[m[K);
+      |                                                   [32m[K~~~~~~~~[m[K
+      |                                                   [32m[K|[m[K
+      |                                                   [32m[Ksize_t {aka long unsigned int}[m[K
+/vortex/tests/opencl/NickNet/Convolution.hpp: In instantiation of '[01m[K_cl_event* Convolution<T, IN, K, C, F>::[01;32m[Krun[m[K() [35m[K[with T = float; unsigned int IN = 8192; unsigned int K = 1; unsigned int C = 16; unsigned int F = 16; cl_event = _cl_event*][m[K[m[K':
+[01m[K/vortex/tests/opencl/NickNet/Network.hpp:50:16:[m[K   required from '[01m[Kvoid Network<T, IN, K0, C0, K1, C1, K2, C2, F>::[01;32m[Krun[m[K() [35m[K[with T = float; unsigned int IN = 8206; unsigned int K0 = 15; unsigned int C0 = 2; unsigned int K1 = 1; unsigned int C1 = 16; unsigned int K2 = 1; unsigned int C2 = 16; unsigned int F = 2][m[K[m[K'
+[01m[K/vortex/tests/opencl/NickNet/main.cc:129:12:[m[K   required from here
+[01m[K/vortex/tests/opencl/NickNet/Convolution.hpp:120:71:[m[K [01;35m[Kwarning: [m[Kformat '[01m[K%d[m[K' expects argument of type '[01m[Kint[m[K', but argument 2 has type '[01m[Klong unsigned int[m[K' [[01;35m[K-Wformat=[m[K]
+  120 |             printf("\033[31mError:\033[0m Requested work group size ([01;35m[K%d[m[K) is greater than "
+      |                                                                      [01;35m[K~^[m[K
+      |                                                                       [01;35m[K|[m[K
+      |                                                                       [01;35m[Kint[m[K
+      |                                                                      [32m[K%ld[m[K
+......
+  124 |                    [32m[Klocal_size[0] * local_size[1][m[K, max_size);
+      |                    [32m[K~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[m[K                       
+      |                                  [32m[K|[m[K
+      |                                  [32m[Klong unsigned int[m[K
+[01m[K/vortex/tests/opencl/NickNet/Convolution.hpp:123:28:[m[K [01;35m[Kwarning: [m[Kformat '[01m[K%d[m[K' expects argument of type '[01m[Kint[m[K', but argument 3 has type '[01m[Ksize_t[m[K' {aka '[01m[Klong unsigned int[m[K'} [[01;35m[K-Wformat=[m[K]
+  123 |                    "size ([01;35m[K%d[m[K)\n",
+      |                           [01;35m[K~^[m[K
+      |                            [01;35m[K|[m[K
+      |                            [01;35m[Kint[m[K
+      |                           [32m[K%ld[m[K
+  124 |                    local_size[0] * local_size[1], [32m[Kmax_size[m[K);
+      |                                                   [32m[K~~~~~~~~[m[K
+      |                                                   [32m[K|[m[K
+      |                                                   [32m[Ksize_t {aka long unsigned int}[m[K
+/vortex/tests/opencl/NickNet/Convolution.hpp: In instantiation of '[01m[K_cl_event* Convolution<T, IN, K, C, F>::[01;32m[Krun[m[K() [35m[K[with T = float; unsigned int IN = 8192; unsigned int K = 1; unsigned int C = 16; unsigned int F = 2; cl_event = _cl_event*][m[K[m[K':
+[01m[K/vortex/tests/opencl/NickNet/Network.hpp:51:16:[m[K   required from '[01m[Kvoid Network<T, IN, K0, C0, K1, C1, K2, C2, F>::[01;32m[Krun[m[K() [35m[K[with T = float; unsigned int IN = 8206; unsigned int K0 = 15; unsigned int C0 = 2; unsigned int K1 = 1; unsigned int C1 = 16; unsigned int K2 = 1; unsigned int C2 = 16; unsigned int F = 2][m[K[m[K'
+[01m[K/vortex/tests/opencl/NickNet/main.cc:129:12:[m[K   required from here
+[01m[K/vortex/tests/opencl/NickNet/Convolution.hpp:120:71:[m[K [01;35m[Kwarning: [m[Kformat '[01m[K%d[m[K' expects argument of type '[01m[Kint[m[K', but argument 2 has type '[01m[Klong unsigned int[m[K' [[01;35m[K-Wformat=[m[K]
+  120 |             printf("\033[31mError:\033[0m Requested work group size ([01;35m[K%d[m[K) is greater than "
+      |                                                                      [01;35m[K~^[m[K
+      |                                                                       [01;35m[K|[m[K
+      |                                                                       [01;35m[Kint[m[K
+      |                                                                      [32m[K%ld[m[K
+......
+  124 |                    [32m[Klocal_size[0] * local_size[1][m[K, max_size);
+      |                    [32m[K~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[m[K                       
+      |                                  [32m[K|[m[K
+      |                                  [32m[Klong unsigned int[m[K
+[01m[K/vortex/tests/opencl/NickNet/Convolution.hpp:123:28:[m[K [01;35m[Kwarning: [m[Kformat '[01m[K%d[m[K' expects argument of type '[01m[Kint[m[K', but argument 3 has type '[01m[Ksize_t[m[K' {aka '[01m[Klong unsigned int[m[K'} [[01;35m[K-Wformat=[m[K]
+  123 |                    "size ([01;35m[K%d[m[K)\n",
+      |                           [01;35m[K~^[m[K
+      |                            [01;35m[K|[m[K
+      |                            [01;35m[Kint[m[K
+      |                           [32m[K%ld[m[K
+  124 |                    local_size[0] * local_size[1], [32m[Kmax_size[m[K);
+      |                                                   [32m[K~~~~~~~~[m[K
+      |                                                   [32m[K|[m[K
+      |                                                   [32m[Ksize_t {aka long unsigned int}[m[K
+g++ -fdiagnostics-color=always  -std=c++17 -Wall -Wextra -Wfatal-errors -Wno-deprecated-declarations -Wno-unused-parameter -Wno-narrowing -pthread -I/root/tools/pocl/include  -O2 -DNDEBUG main.cc.o -Wl,-rpath,/root/tools/llvm-vortex/lib -L/vortex/build/runtime -lvortex -L/root/tools/pocl/lib -lOpenCL -o NickNet
 LD_LIBRARY_PATH=/root/tools/pocl/lib:/vortex/build/runtime:/root/tools/llvm-vortex/lib: POCL_VORTEX_XLEN=32 LLVM_PREFIX=/root/tools/llvm-vortex POCL_VORTEX_BINTOOL="OBJCOPY=/root/tools/llvm-vortex/bin/llvm-objcopy /vortex/kernel/scripts/vxbin.py" POCL_VORTEX_CFLAGS="-march=rv32imaf -mabi=ilp32f -O3 -mcmodel=medany --sysroot=/root/tools/riscv32-gnu-toolchain/riscv32-unknown-elf --gcc-toolchain=/root/tools/riscv32-gnu-toolchain -fno-rtti -fno-exceptions -nostartfiles -nostdlib -fdata-sections -ffunction-sections -I/vortex/build/hw -I/vortex/kernel/include -DXLEN_32 -DNDEBUG  -Xclang -target-feature -Xclang +vortex -Xclang -target-feature -Xclang +zicond -mllvm -disable-loop-idiom-all	" POCL_VORTEX_LDFLAGS="-Wl,-Bstatic,--gc-sections,-T/vortex/kernel/scripts/link32.ld,--defsym=STARTUP_ADDR=0x80000000 /vortex/build/kernel/libvortex.a -L/root/tools/libc32/lib -lm -lc /root/tools/libcrt32/lib/baremetal/libclang_rt.builtins-riscv32.a" VORTEX_DRIVER=simx ./NickNet 
 Starting device
 Create context
 Create program from kernel source
 Initializing network
 Running Network on device
-layer0 post-relu sparsity: 64.3%
-layer1 post-relu sparsity: 46.9%
 Running network simulation
 [32mPASSED![0m
 Device Info:
@@ -26,5 +118,5 @@ Releasing kernel
 Releasing kernel
 Releasing context
 Releasing device_id
-PERF: instrs=4930130, cycles=962281, IPC=5.123379
+PERF: instrs=4897362, cycles=796049, IPC=6.152086
 make: Leaving directory '/vortex/build/tests/opencl/NickNet'

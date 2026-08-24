@@ -58,7 +58,7 @@ template <uint32_t L> static TYPE **gen_weights(uint32_t *W) {
 }
 
 template <typename T, uint32_t IN, uint32_t K, uint32_t C, uint32_t F>
-static void convolution_cpu(TYPE *I,   // [NumChannels, SeqLength]
+static void convolution_cpu(TYPE *I,   // [SeqLength, NumChannels]
                             TYPE *W,   // [NumFilters, NumChannels, K]
                             TYPE *B,   // [NumFilters]
                             TYPE *O) { // [NumFilters, OutLen]
@@ -69,7 +69,7 @@ static void convolution_cpu(TYPE *I,   // [NumChannels, SeqLength]
             TYPE acc = B[f];
             for (uint32_t c = 0; c < C; c++) {
                 for (uint32_t k = 0; k < K; k++) {
-                    acc += I[c * IN + t + k] * W[f * C * K + c * K + k];
+                    acc += I[(t + k) * C + c] * W[f * C * K + c * K + k];
                 }
             }
             O[f * OUT + t] = acc;
@@ -107,7 +107,7 @@ int main() {
                                      &h_B);
 
     std::vector<TYPE> h_i(_IN * _C0);
-    TYPE *sample = weights_io::load_input_channels_first("model/X_test.bin", 0, _IN, _C0);
+    TYPE *sample = weights_io::load_input("model/X_test.bin", 0, _IN, _C0);
     std::copy(sample, sample + _IN * _C0, h_i.begin());
     std::free(sample);
     std::vector<TYPE> h_o(_OUT2 * _F, 0.0f);
@@ -128,6 +128,7 @@ int main() {
     Net.load_input(h_i.data());
     Net.run();
     Net.get_output(h_o.data());
+#ifdef MEASURE_SPARSITY
     std::vector<TYPE> o0(Net.c0->o_points), o1(Net.c1->o_points);
     Net.c0->get_output(o0.data());
     Net.c1->get_output(o1.data());
@@ -136,6 +137,7 @@ int main() {
     };
     printf("layer0 post-relu sparsity: %.1f%%\n", 100 * sparsity(o0));
     printf("layer1 post-relu sparsity: %.1f%%\n", 100 * sparsity(o1));
+#endif
 
     printf("Running network simulation\n");
     nick_net_cpu<TYPE, _IN, _K0, _C0, _K1, _C1, _K2, _C2, _F>(h_i.data(), h_W, h_B,
