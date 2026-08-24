@@ -18,7 +18,7 @@
 
 #define KERNEL_NAME "conv1"
 #define _IN 8206
-#define _BATCH 16
+#define _BATCH 32
 // #define _K 5
 // #define _C 2
 // #define _OUT (_IN - _K + 1)
