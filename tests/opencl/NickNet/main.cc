@@ -2,9 +2,9 @@
 #include "Convolution.hpp"
 #include "Device.hpp"
 #include "Network.hpp"
-#include "ReLU.hpp"
 #include "common.h"
 #include "weights_loader.hpp"
+#include <algorithm>
 #include <assert.h>
 // #include <ios>
 #include <cstddef>
@@ -128,6 +128,14 @@ int main() {
     Net.load_input(h_i.data());
     Net.run();
     Net.get_output(h_o.data());
+    std::vector<TYPE> o0(Net.c0->o_points), o1(Net.c1->o_points);
+    Net.c0->get_output(o0.data());
+    Net.c1->get_output(o1.data());
+    auto sparsity = [](std::vector<TYPE> &v) {
+        return std::count(v.begin(), v.end(), 0.0f) / (double)v.size();
+    };
+    printf("layer0 post-relu sparsity: %.1f%%\n", 100 * sparsity(o0));
+    printf("layer1 post-relu sparsity: %.1f%%\n", 100 * sparsity(o1));
 
     printf("Running network simulation\n");
     nick_net_cpu<TYPE, _IN, _K0, _C0, _K1, _C1, _K2, _C2, _F>(h_i.data(), h_W, h_B,
