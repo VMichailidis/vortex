@@ -42,7 +42,7 @@ class Device {
         char device_string[1024];
         clGetDeviceInfo(device_id, CL_DEVICE_NAME, sizeof(device_string), &device_string,
                         NULL);
-        q = CL_CHECK2(cl_err, clCreateCommandQueue(context, device_id, 0, &cl_err));
+        q = CL_CHECK2(cl_err, clCreateCommandQueue(context, device_id, CL_QUEUE_PROFILING_ENABLE, &cl_err));
         // Build program
         printf("Create program from kernel source\n");
         if (0 != read_kernel_file("kernel.cl", &kernel_bin, &kernel_size))

@@ -117,7 +117,7 @@ class Convolution {
     }
 
     cl_event run() {
-        cl_event target;
+        cl_event ev;
         size_t max_size = dev->max_work_group_sizes();
         if (local_size[0] * local_size[1] * local_size[2] > max_size) {
             printf("\033[31mError:\033[0m Requested work group size (%d) is greater than "
@@ -127,9 +127,10 @@ class Convolution {
                    local_size[0] * local_size[1] * local_size[2], max_size);
             exit(-1);
         }
+
         CL_CHECK(clEnqueueNDRangeKernel(q, kernel, 3, NULL, global_size, local_size, 0,
-                                        NULL, NULL));
-        return target;
+                                        NULL, &ev));
+        return ev;
     }
 };
 

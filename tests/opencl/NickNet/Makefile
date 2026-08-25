@@ -14,5 +14,5 @@ KERNEL_SRCS := kernel.cl
 
 # OPTS ?= -n32
 CXXFLAGS += -fdiagnostics-color=always 
-# CXXFLAGS += -D MEASURE_SPARSITY
+CXXFLAGS += -D LAYER_TIMING
 include ../common.mk

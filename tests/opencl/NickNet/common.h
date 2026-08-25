@@ -58,6 +58,9 @@ static int read_kernel_file(const char *filename, uint8_t **data, size_t *size) 
 
     return 0;
 }
+struct ProfileEvents {
+    cl_event e0, e1, e2;
+};
 #define CL_NAMES                                                                         \
     X(CL_DEVICE_TYPE, "Type")                                                            \
     X(CL_DEVICE_VENDOR_ID, "Vendor Id")                                                  \

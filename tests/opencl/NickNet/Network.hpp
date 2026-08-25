@@ -45,10 +45,12 @@ class Network {
     void load_input(TYPE *i) { c0->load_input(i); }
 
     void get_output(TYPE *o) { c2->get_output(o); }
-    void run() {
-        c0->run();
-        c1->run();
-        c2->run();
+    ProfileEvents run() {
+        ProfileEvents ev;
+        ev.e0 = c0->run();
+        ev.e1 = c1->run();
+        ev.e2 = c2->run();
+        return ev;
     }
 };
 

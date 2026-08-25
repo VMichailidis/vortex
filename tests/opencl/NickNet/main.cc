@@ -18,7 +18,7 @@
 
 #define KERNEL_NAME "conv1"
 #define _IN 8206
-#define _BATCH 32
+#define _BATCH 2
 // #define _K 5
 // #define _C 2
 // #define _OUT (_IN - _K + 1)
@@ -129,7 +129,7 @@ int main() {
     printf("Running Network on device\n");
     Net.load_weights(h_W, h_B);
     Net.load_input(h_i.data());
-    Net.run();
+    ProfileEvents ev = Net.run();
     Net.get_output(h_o.data());
 #ifdef MEASURE_SPARSITY
     std::vector<TYPE> o0(Net.c0->o_points), o1(Net.c1->o_points);
@@ -140,6 +140,28 @@ int main() {
     };
     printf("layer0 post-relu sparsity: %.1f%%\n", 100 * sparsity(o0));
     printf("layer1 post-relu sparsity: %.1f%%\n", 100 * sparsity(o1));
+#endif
+#define LAYER_TIMING
+#ifdef LAYER_TIMING
+    auto ns = [](cl_event e, cl_profiling_info info) {
+        cl_ulong t;
+        CL_CHECK(clGetEventProfilingInfo(e, info, sizeof(t), &t, NULL));
+        return t;
+    };
+    auto report = [&](const char *name, cl_event e) {
+        cl_ulong q = ns(e, CL_PROFILING_COMMAND_QUEUED);
+        cl_ulong sb = ns(e, CL_PROFILING_COMMAND_SUBMIT);
+        cl_ulong st = ns(e, CL_PROFILING_COMMAND_START);
+        cl_ulong en = ns(e, CL_PROFILING_COMMAND_END);
+
+        printf("\033[33m[PROFILING]\033[0m %-8s queue->submit: %.3f ms submit->start "
+               "%.3f ms exec: %.3f ms\n",
+               name, (sb - q) / 1e6, (st - sb) / 1e6, (en - st) / 1e6);
+    };
+    CL_CHECK(clWaitForEvents(1, &ev.e2));
+    report("conv0", ev.e0);
+    report("conv1", ev.e1);
+    report("conv2", ev.e2);
 #endif
 
     printf("Running network simulation\n");
