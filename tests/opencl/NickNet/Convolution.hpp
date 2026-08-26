@@ -82,13 +82,13 @@ class Convolution {
         CL_CHECK(clSetKernelArg(kernel, 2, sizeof(cl_mem), (void *)&b_memobj));
         CL_CHECK(clSetKernelArg(kernel, 3, sizeof(cl_mem), (void *)&port_out));
 
-        // CL_CHECK(clSetKernelArg(kernel, 4, C * (y_size + K) * sizeof(T), NULL));
+        CL_CHECK(clSetKernelArg(kernel, 4, C * (y_size + K) * sizeof(T), NULL));
 
-        CL_CHECK(clSetKernelArg(kernel, 4, sizeof(uint32_t), &in));
-        CL_CHECK(clSetKernelArg(kernel, 5, sizeof(uint32_t), &k));
-        CL_CHECK(clSetKernelArg(kernel, 6, sizeof(uint32_t), &c));
-        CL_CHECK(clSetKernelArg(kernel, 7, sizeof(uint32_t), &f));
-        CL_CHECK(clSetKernelArg(kernel, 8, sizeof(uint32_t), &b));
+        CL_CHECK(clSetKernelArg(kernel, 5, sizeof(uint32_t), &in));
+        CL_CHECK(clSetKernelArg(kernel, 6, sizeof(uint32_t), &k));
+        CL_CHECK(clSetKernelArg(kernel, 7, sizeof(uint32_t), &c));
+        CL_CHECK(clSetKernelArg(kernel, 8, sizeof(uint32_t), &f));
+        CL_CHECK(clSetKernelArg(kernel, 9, sizeof(uint32_t), &b));
         // Creating command queue
         q = dev_h.q;
     }
