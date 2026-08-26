@@ -17,8 +17,8 @@
 #define FLOAT_ULP 6
 
 #define KERNEL_NAME "conv1"
-// #define _IN 8206
-#define _IN 128
+#define _IN 8206
+// #define _IN 128
 #define _BATCH 2
 // #define _K 5
 // #define _C 2
