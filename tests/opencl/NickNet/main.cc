@@ -17,7 +17,8 @@
 #define FLOAT_ULP 6
 
 #define KERNEL_NAME "conv1"
-#define _IN 8206
+// #define _IN 8206
+#define _IN 128
 #define _BATCH 2
 // #define _K 5
 // #define _C 2
@@ -131,6 +132,7 @@ int main() {
     Net.load_input(h_i.data());
     ProfileEvents ev = Net.run();
     Net.get_output(h_o.data());
+#define MEASURE_SPARSITY
 #ifdef MEASURE_SPARSITY
     std::vector<TYPE> o0(Net.c0->o_points), o1(Net.c1->o_points);
     Net.c0->get_output(o0.data());
@@ -163,6 +165,9 @@ int main() {
     report("conv1", ev.e1);
     report("conv2", ev.e2);
 #endif
+    clReleaseEvent(ev.e0);
+    clReleaseEvent(ev.e1);
+    clReleaseEvent(ev.e2);
 
     printf("Running network simulation\n");
     nick_net_cpu<TYPE, _IN, _K0, _C0, _K1, _C1, _K2, _C2, _F, _BATCH>(
