@@ -41,10 +41,10 @@ TYPE conv(__global TYPE *I, // [Num Channels, Seq Length]
     return acc;
 }
 
-TYPE conv_no_cache(__global TYPE *I, // [Num Channels, Seq Length]
-                   __global TYPE *W, // [Num Filters, Num Channels, K]
-                   __global TYPE *B, // [Num Filters]
-                   __global TYPE *O, // [Out Len, Num filters]
+TYPE conv_no_cache(__global TYPE *I,   // [Num Channels, Seq Length]
+                   __constant TYPE *W, // [Num Filters, Num Channels, K]
+                   __constant TYPE *B, // [Num Filters]
+                   __global TYPE *O,   // [Out Len, Num filters]
                    const int IN, const int K, const int C, const int F,
                    // __local TYPE *LW, // [Num Filters, Num Channels, K]
                    int f, int t, int b) {
@@ -58,10 +58,10 @@ TYPE conv_no_cache(__global TYPE *I, // [Num Channels, Seq Length]
     return acc;
 }
 
-__kernel void conv1(__global TYPE *I, // [Num Channels, Seq Length]
-                    __global TYPE *W, // [Num Filters, Num Channels, K]
-                    __global TYPE *B, // [Num Filters]
-                    __global TYPE *O, // [Out Len, Num filters]
+__kernel void conv1(__global TYPE *I,   // [Num Channels, Seq Length]
+                    __constant TYPE *W, // [Num Filters, Num Channels, K]
+                    __constant TYPE *B, // [Num Filters]
+                    __global TYPE *O,   // [Out Len, Num filters]
                     // __local TYPE *L,  // [Num Channels, local size + K]
                     const int IN, const int K, const int C, const int F,
                     const int BATCH) {
@@ -76,10 +76,10 @@ __kernel void conv1(__global TYPE *I, // [Num Channels, Seq Length]
         return;
     O[b * OUT * F + F * t + f] = result;
 }
-__kernel void conv1_relu(__global TYPE *I, // [Num Channels, Seq Length]
-                         __global TYPE *W, // [Num Filters, Num Channels, K]
-                         __global TYPE *B, // [Num Filters]
-                         __global TYPE *O, // [Out Len, Num filters]
+__kernel void conv1_relu(__global TYPE *I,   // [Num Channels, Seq Length]
+                         __constant TYPE *W, // [Num Filters, Num Channels, K]
+                         __constant TYPE *B, // [Num Filters]
+                         __global TYPE *O,   // [Out Len, Num filters]
                          // __local TYPE *L,  // [Num Channels, local size + K
                          const int IN, const int K, const int C, const int F,
                          const int BATCH) {
