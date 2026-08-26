@@ -71,9 +71,9 @@ __kernel void conv1(__global TYPE *I,   // [Num Channels, Seq Length]
 
     int OUT = (IN - K) + 1;
     // TYPE result = conv(I, W, B, O, IN, K, C, F, L, f, t);
-    TYPE result = conv_no_cache(I, W, B, O, IN, K, C, F, f, t, b);
     if (b >= BATCH || f >= F || t >= OUT)
         return;
+    TYPE result = conv_no_cache(I, W, B, O, IN, K, C, F, f, t, b);
     O[b * OUT * F + F * t + f] = result;
 }
 __kernel void conv1_relu(__global TYPE *I,   // [Num Channels, Seq Length]
@@ -88,8 +88,8 @@ __kernel void conv1_relu(__global TYPE *I,   // [Num Channels, Seq Length]
     int b = get_global_id(2); // batch
     int OUT = (IN - K) + 1;
     // TYPE result = conv(I, W, B, O, IN, K, C, F, L, f, t);
-    TYPE result = conv_no_cache(I, W, B, O, IN, K, C, F, f, t, b);
     if (b >= BATCH || f >= F || t >= OUT)
         return;
+    TYPE result = conv_no_cache(I, W, B, O, IN, K, C, F, f, t, b);
     O[b * OUT * F + F * t + f] = result > 0.0f ? result : 0.0f;
 }
