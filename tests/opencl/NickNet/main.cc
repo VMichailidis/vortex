@@ -144,18 +144,6 @@ int main() {
     printf("layer1 post-relu sparsity: %.1f%%\n", 100 * sparsity(o1));
 #endif
 #define LAYER_TIMING
-    /*
-    uniformly cached input
-    [PROFILING] conv0    queue->submit: 0.000 ms submit->start 0.000 ms exec: 48220.858 ms
-    [PROFILING] conv1    queue->submit: 0.000 ms submit->start 0.001 ms exec: 105024.032 ms
-    [PROFILING] conv2    queue->submit: 0.000 ms submit->start 0.001 ms exec: 13280.758 ms
-
-    uncached
-    [PROFILING] conv0    queue->submit: 0.000 ms submit->start 0.000 ms exec: 29826.596 ms
-    [PROFILING] conv1    queue->submit: 0.000 ms submit->start 0.001 ms exec: 31564.321 ms
-    [PROFILING] conv2    queue->submit: 0.000 ms submit->start 0.001 ms exec: 3931.845 ms
-    */
-
 #ifdef LAYER_TIMING
     auto ns = [](cl_event e, cl_profiling_info info) {
         cl_ulong t;
